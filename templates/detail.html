@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}{{ post[1] }} - 校园搭子{% endblock %}
+
+{% block content %}
+<div class="detail-container">
+    <div class="detail-card">
+        <div class="detail-header">
+            <span class="post-category cat-{{ post[2] }}">{{ post[2] }}</span>
+            <span class="post-time">{{ post[5] }}</span>
+        </div>
+
+        <h1 class="detail-title">{{ post[1] }}</h1>
+
+        <div class="detail-meta">
+            <span>👤 {{ post[6] }}</span>
+        </div>
+
+        <div class="detail-content">
+            {{ post[3] }}
+        </div>
+
+        <div class="detail-contact">
+            <h4>联系方式</h4>
+            <div class="contact-box">
+                <span class="contact-text" id="contactText">{{ post[4] }}</span>
+                <button class="btn-copy" onclick="copyContact()">📋 复制</button>
+            </div>
+        </div>
+
+        {% if is_owner %}
+        <form method="POST" action="/post/{{ post[0] }}/delete"
+              onsubmit="return confirm('确定要删除这条帖子吗？');">
+            <button type="submit" class="btn-danger btn-block">删除帖子</button>
+        </form>
+        {% endif %}
+
+        <a href="/" class="btn-secondary btn-block">返回首页</a>
+    </div>
+</div>
+
+<script>
+function copyContact() {
+    const text = document.getElementById('contactText').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+        alert('联系方式已复制！');
+    }).catch(() => {
+        // 兼容旧浏览器
+        const input = document.createElement('input');
+        input.value = text;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+        alert('联系方式已复制！');
+    });
+}
+</script>
+{% endblock %}

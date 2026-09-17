@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}发布帖子 - 校园搭子{% endblock %}
+
+{% block content %}
+<div class="publish-container">
+    <h2 class="page-title">发布搭子帖</h2>
+
+    {% if error %}
+    <div class="error-msg">{{ error }}</div>
+    {% endif %}
+
+    <form method="POST" action="/publish" class="publish-form">
+        <div class="form-group">
+            <label>帖子标题 <span class="required">*</span> <span class="hint">(2-50字)</span></label>
+            <input type="text" name="title" placeholder="例如：周五晚上一起打球的搭子"
+                   required minlength="2" maxlength="50">
+        </div>
+
+        <div class="form-group">
+            <label>帖子分类 <span class="required">*</span></label>
+            <select name="category" required>
+                <option value="">请选择分类</option>
+                {% for cat in categories %}
+                <option value="{{ cat }}">{{ cat }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>帖子内容 <span class="required">*</span> <span class="hint">(5-500字)</span></label>
+            <textarea name="content" rows="6" placeholder="详细描述你的需求，比如时间、地点、要求等..."
+                      required minlength="5" maxlength="500"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>联系方式 <span class="required">*</span></label>
+            <input type="text" name="contact" placeholder="手机号或微信号，方便联系你" required>
+        </div>
+
+        <button type="submit" class="btn-primary btn-block">发布帖子</button>
+    </form>
+</div>
+{% endblock %}

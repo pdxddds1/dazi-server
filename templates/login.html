@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}登录/注册 - 校园搭子{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <h2 class="auth-title">{{ '注册' if action == 'register' else '登录' }}</h2>
+        <p class="auth-subtitle">校园搭子，找到你的同好伙伴</p>
+
+        {% if error %}
+        <div class="error-msg">{{ error }}</div>
+        {% endif %}
+
+        <form method="POST" action="/login">
+            <input type="hidden" name="action" value="{{ action }}">
+
+            <div class="form-group">
+                <label>手机号</label>
+                <input type="tel" name="phone" placeholder="请输入11位手机号" required
+                       pattern="\d{11}" maxlength="11">
+            </div>
+
+            <div class="form-group">
+                <label>密码</label>
+                <input type="password" name="password" placeholder="请输入密码" required minlength="6">
+            </div>
+
+            <button type="submit" class="btn-primary">
+                {{ '立即注册' if action == 'register' else '登录' }}
+            </button>
+        </form>
+
+        <div class="auth-switch">
+            {% if action == 'login' %}
+                还没有账号？
+                <a href="/login?action=register" onclick="event.preventDefault(); switchMode('register');">立即注册</a>
+            {% else %}
+                已有账号？
+                <a href="/login" onclick="event.preventDefault(); switchMode('login');">直接登录</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function switchMode(mode) {
+    document.querySelector('input[name="action"]').value = mode;
+    document.querySelector('.auth-title').textContent = mode === 'register' ? '注册' : '登录';
+    document.querySelector('.btn-primary').textContent = mode === 'register' ? '立即注册' : '登录';
+    document.querySelector('.auth-switch').innerHTML = mode === 'register'
+        ? '已有账号？ <a href="#" onclick="switchMode(\'login\');return false;">直接登录</a>'
+        : '还没有账号？ <a href="#" onclick="switchMode(\'register\');return false;">立即注册</a>';
+}
+</script>
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}个人中心 - 校园搭子{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="profile-card">
+        <div class="avatar">👤</div>
+        <h2 class="profile-name">{{ nickname }}</h2>
+        <a href="/logout" class="btn-secondary">退出登录</a>
+    </div>
+
+    <h3 class="section-title">我发布的帖子</h3>
+
+    <div class="my-posts">
+        {% if my_posts %}
+            {% for post in my_posts %}
+            <div class="my-post-card">
+                <div class="my-post-header">
+                    <span class="post-category cat-{{ post[2] }}">{{ post[2] }}</span>
+                    <span class="post-time">{{ post[3] }}</span>
+                </div>
+                <h4 class="my-post-title">
+                    <a href="/post/{{ post[0] }}">{{ post[1] }}</a>
+                </h4>
+                <div class="my-post-actions">
+                    {% if post[4] == 1 %}
+                        <span class="status-active">✅ 进行中</span>
+                    {% else %}
+                        <span class="status-deleted">🗑️ 已删除</span>
+                    {% endif %}
+                    {% if post[4] == 1 %}
+                    <form method="POST" action="/post/{{ post[0] }}/delete" style="display:inline;"
+                          onsubmit="return confirm('确定要删除这条帖子吗？');">
+                        <button type="submit" class="btn-delete-small">删除</button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">📝</div>
+                <p>你还没有发布过帖子</p>
+                <a href="/publish" class="btn-secondary">去发帖</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

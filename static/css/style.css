@@ -1,0 +1,473 @@
+/* ===== 全局重置 ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                 "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background-color: #f5f5f7;
+    color: #333;
+    line-height: 1.6;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+/* ===== 导航栏 ===== */
+.navbar {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.nav-container {
+    max-width: 750px;
+    margin: 0 auto;
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nav-logo {
+    font-size: 18px;
+    font-weight: bold;
+    color: white;
+}
+
+.nav-links {
+    display: flex;
+    gap: 12px;
+}
+
+.nav-btn {
+    color: white;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 14px;
+    background: rgba(255,255,255,0.2);
+    transition: background 0.2s;
+}
+
+.nav-btn:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+/* ===== 主内容区 ===== */
+.main-content {
+    max-width: 750px;
+    margin: 0 auto;
+    padding: 16px;
+    min-height: calc(100vh - 120px);
+}
+
+/* ===== 分类筛选栏 ===== */
+.category-bar {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 8px 0 16px;
+    -webkit-overflow-scrolling: touch;
+}
+
+.category-tag {
+    padding: 6px 16px;
+    border-radius: 20px;
+    background: white;
+    font-size: 14px;
+    white-space: nowrap;
+    border: 1px solid #e0e0e0;
+    transition: all 0.2s;
+}
+
+.category-tag.active {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+/* ===== 帖子卡片 ===== */
+.post-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.post-card {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    transition: transform 0.15s;
+}
+
+.post-card:active {
+    transform: scale(0.98);
+}
+
+.post-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.post-category {
+    font-size: 12px;
+    padding: 2px 10px;
+    border-radius: 10px;
+    font-weight: 500;
+}
+
+.cat-运动 { background: #e3f2fd; color: #1976d2; }
+.cat-学习 { background: #e8f5e9; color: #388e3c; }
+.cat-游戏 { background: #fff3e0; color: #f57c00; }
+.cat-生活 { background: #fce4ec; color: #c2185b; }
+.cat-其他 { background: #f3e5f5; color: #7b1fa2; }
+
+.post-time {
+    font-size: 12px;
+    color: #999;
+}
+
+.post-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #333;
+}
+
+.post-author {
+    font-size: 13px;
+    color: #888;
+}
+
+/* ===== 空状态 ===== */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #999;
+}
+
+.empty-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+}
+
+/* ===== 按钮 ===== */
+.btn-primary {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.btn-primary:hover {
+    opacity: 0.9;
+}
+
+.btn-secondary {
+    display: inline-block;
+    padding: 10px 24px;
+    background: white;
+    color: #667eea;
+    border: 1px solid #667eea;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    text-align: center;
+}
+
+.btn-danger {
+    background: #f44336;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 16px;
+}
+
+.btn-block {
+    display: block;
+    width: 100%;
+    margin-top: 16px;
+}
+
+/* ===== 表单 ===== */
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+    color: #555;
+    font-weight: 500;
+}
+
+.required {
+    color: #f44336;
+}
+
+.hint {
+    color: #999;
+    font-weight: normal;
+    font-size: 12px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 15px;
+    font-family: inherit;
+    background: white;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.form-group textarea {
+    resize: vertical;
+}
+
+/* ===== 登录注册页 ===== */
+.auth-container {
+    display: flex;
+    justify-content: center;
+    padding: 40px 16px;
+}
+
+.auth-card {
+    background: white;
+    border-radius: 16px;
+    padding: 32px 24px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+.auth-title {
+    text-align: center;
+    font-size: 24px;
+    margin-bottom: 8px;
+    color: #333;
+}
+
+.auth-subtitle {
+    text-align: center;
+    color: #999;
+    font-size: 14px;
+    margin-bottom: 24px;
+}
+
+.auth-switch {
+    text-align: center;
+    margin-top: 16px;
+    font-size: 14px;
+    color: #666;
+}
+
+.auth-switch a {
+    color: #667eea;
+    font-weight: 500;
+}
+
+.error-msg {
+    background: #ffebee;
+    color: #c62828;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    margin-bottom: 16px;
+}
+
+/* ===== 发帖页 ===== */
+.publish-container {
+    background: white;
+    border-radius: 12px;
+    padding: 24px 16px;
+}
+
+.page-title {
+    font-size: 20px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+/* ===== 详情页 ===== */
+.detail-container {
+    padding: 16px 0;
+}
+
+.detail-card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px 16px;
+}
+
+.detail-title {
+    font-size: 20px;
+    margin: 12px 0 8px;
+    line-height: 1.4;
+}
+
+.detail-meta {
+    color: #888;
+    font-size: 14px;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #eee;
+}
+
+.detail-content {
+    font-size: 15px;
+    line-height: 1.8;
+    color: #444;
+    margin-bottom: 24px;
+}
+
+.detail-contact {
+    background: #f8f9ff;
+    padding: 16px;
+    border-radius: 8px;
+}
+
+.detail-contact h4 {
+    font-size: 14px;
+    color: #667eea;
+    margin-bottom: 10px;
+}
+
+.contact-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    padding: 10px 14px;
+    border-radius: 6px;
+}
+
+.contact-text {
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.btn-copy {
+    background: #667eea;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+/* ===== 个人中心 ===== */
+.profile-container {
+    padding: 16px 0;
+}
+
+.profile-card {
+    background: white;
+    border-radius: 12px;
+    padding: 32px 16px;
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.avatar {
+    font-size: 56px;
+    margin-bottom: 12px;
+}
+
+.profile-name {
+    font-size: 20px;
+    margin-bottom: 16px;
+}
+
+.section-title {
+    font-size: 16px;
+    margin-bottom: 12px;
+    color: #333;
+}
+
+.my-posts {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.my-post-card {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.my-post-title {
+    margin: 8px 0;
+    font-size: 15px;
+}
+
+.my-post-title a {
+    color: #333;
+}
+
+.my-post-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+    font-size: 13px;
+}
+
+.status-active {
+    color: #4caf50;
+}
+
+.status-deleted {
+    color: #999;
+}
+
+.btn-delete-small {
+    background: #ffebee;
+    color: #c62828;
+    border: none;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+/* ===== 底部 ===== */
+.footer {
+    text-align: center;
+    padding: 20px;
+    color: #aaa;
+    font-size: 12px;
+}
