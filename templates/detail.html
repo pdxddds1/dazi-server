@@ -1,40 +1,122 @@
 {% extends "base.html" %}
-{% block title %}{{ post[1] }} - 校园搭子{% endblock %}
+{% block title %}{{ post.title }} - 校园搭子{% endblock %}
 
 {% block content %}
 <div class="detail-container">
     <div class="detail-card">
         <div class="detail-header">
-            <span class="post-category cat-{{ post[2] }}">{{ post[2] }}</span>
-            <span class="post-time">{{ post[5] }}</span>
+            <span class="post-category cat-{{ post.category }}">{{ post.category }}</span>
+            <span class="post-time">{{ post.create_time }}</span>
         </div>
 
-        <h1 class="detail-title">{{ post[1] }}</h1>
+        <h1 class="detail-title">{{ post.title }}</h1>
 
-        <div class="detail-meta">
-            <span>👤 {{ post[6] }}</span>
-        </div>
+        <!-- 作者信息行（点头像/昵称进主页） -->
+        <a href="/user/{{ post.author_id }}" class="detail-author">
+            {% if post.avatar %}<img src="{{ post.avatar }}" class="mini-avatar" alt="头像">{% else %}👤{% endif %}
+            {{ post.nickname }}
+            {% if post.age %}<span class="author-age">{{ post.age }}岁</span>{% endif %}
+            {% if post.gender %}<span class="author-age">{{ post.gender }}</span>{% endif %}
+            <span class="author-age">信用 {{ post.credit }}</span>
+        </a>
 
-        <div class="detail-content">
-            {{ post[3] }}
-        </div>
+        <div class="detail-content">{{ post.content }}</div>
 
+        <!-- 联系方式（作者可设置仅登录用户可见） -->
+        {% if contact_visible %}
         <div class="detail-contact">
             <h4>联系方式</h4>
             <div class="contact-box">
-                <span class="contact-text" id="contactText">{{ post[4] }}</span>
+                <span class="contact-text" id="contactText">{{ post.contact }}</span>
                 <button class="btn-copy" onclick="copyContact()">📋 复制</button>
             </div>
         </div>
-
-        {% if is_owner %}
-        <form method="POST" action="/post/{{ post[0] }}/delete"
-              onsubmit="return confirm('确定要删除这条帖子吗？');">
-            <button type="submit" class="btn-danger btn-block">删除帖子</button>
-        </form>
+        {% else %}
+        <div class="detail-contact">
+            <h4>联系方式</h4>
+            <div class="tip">作者设置了仅登录用户可见，<a href="/login">登录后</a>查看</div>
+        </div>
         {% endif %}
 
-        <a href="/" class="btn-secondary btn-block">返回首页</a>
+        <!-- 点赞 / 收藏 / 编辑 / 举报 -->
+        <div class="detail-actions">
+            {% if logged_in %}
+            <button class="action-btn {{ 'active' if liked else '' }}" id="like-btn"
+                    onclick="toggleLike()">❤ <span id="like-count">{{ like_count }}</span></button>
+            <button class="action-btn {{ 'active' if favorited else '' }}" id="fav-btn"
+                    onclick="toggleFav()">⭐ 收藏 <span id="fav-count">{{ fav_count }}</span></button>
+            {% else %}
+            <span class="action-btn">❤ <span>{{ like_count }}</span></span>
+            <span class="action-btn">⭐ 收藏 <span>{{ fav_count }}</span></span>
+            {% endif %}
+
+            {% if is_owner %}
+            <a href="/post/{{ post.id }}/edit" class="action-btn">✏️ 编辑</a>
+            <form method="POST" action="/post/{{ post.id }}/delete" style="display:inline;"
+                  onsubmit="return confirm('确定要删除这条帖子吗？');">
+                <button type="submit" class="action-btn danger">🗑️ 删除</button>
+            </form>
+            {% elif logged_in %}
+            <form method="POST" action="/post/{{ post.id }}/report" class="report-form"
+                  onsubmit="return confirm('确认举报这条帖子？');">
+                <input type="text" name="reason" placeholder="举报原因（选填）" class="report-input">
+                <button type="submit" class="action-btn danger">举报</button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 作者卡片：兴趣标签、自我介绍 -->
+    <div class="detail-card author-card">
+        <div class="author-card-head">
+            {% if post.avatar %}<img src="{{ post.avatar }}" class="big-avatar" alt="头像">{% else %}<div class="big-avatar">👤</div>{% endif %}
+            <div>
+                <a href="/user/{{ post.author_id }}" class="author-name">{{ post.nickname }}</a>
+                {% if post.bio %}<div class="author-bio">{{ post.bio }}</div>{% endif %}
+            </div>
+            <a href="/user/{{ post.author_id }}" class="btn-secondary btn-sm">查看主页</a>
+        </div>
+        {% if author_interests %}
+        <div class="profile-tags" style="justify-content:flex-start;">
+            {% for tag in author_interests %}
+            <span class="tag-badge">{{ tag }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- 评论区 -->
+    <div class="detail-card">
+        <h3 class="section-title">评论（{{ comments|length }}）</h3>
+
+        {% if logged_in and not blocked_by_author %}
+        <form method="POST" action="/post/{{ post.id }}/comment" class="comment-form">
+            <input type="text" name="content" maxlength="200" required
+                   placeholder="友善评论，先聊聊再决定要不要一起玩～">
+            <button type="submit" class="btn-comment">评论</button>
+        </form>
+        {% elif blocked_by_author %}
+        <div class="tip">你已被该帖作者拉黑，无法评论</div>
+        {% else %}
+        <div class="tip"><a href="/login">登录后可以评论</a></div>
+        {% endif %}
+
+        <div class="comment-list">
+            {% for cm in comments %}
+            <div class="comment-item">
+                {% if cm.avatar %}<img src="{{ cm.avatar }}" class="mini-avatar" alt="头像">{% else %}👤{% endif %}
+                <div class="comment-body">
+                    <div class="comment-head">
+                        <a href="/user/{{ cm.user_id }}" class="comment-name">{{ cm.nickname }}</a>
+                        <span class="post-time">{{ cm.create_time }}</span>
+                    </div>
+                    <div class="comment-text">{{ cm.content }}</div>
+                </div>
+            </div>
+            {% else %}
+            <div class="tip" style="padding:10px 0;">还没有评论，抢个沙发～</div>
+            {% endfor %}
+        </div>
     </div>
 </div>
 
@@ -44,7 +126,6 @@ function copyContact() {
     navigator.clipboard.writeText(text).then(() => {
         alert('联系方式已复制！');
     }).catch(() => {
-        // 兼容旧浏览器
         const input = document.createElement('input');
         input.value = text;
         document.body.appendChild(input);
@@ -53,6 +134,26 @@ function copyContact() {
         document.body.removeChild(input);
         alert('联系方式已复制！');
     });
+}
+
+function toggleLike() {
+    fetch('/post/{{ post.id }}/like', { method: 'POST' })
+        .then(r => r.json())
+        .then(res => {
+            if (res.code !== 0) { alert(res.message); return; }
+            document.getElementById('like-count').textContent = res.count;
+            document.getElementById('like-btn').classList.toggle('active', res.liked);
+        });
+}
+
+function toggleFav() {
+    fetch('/post/{{ post.id }}/favorite', { method: 'POST' })
+        .then(r => r.json())
+        .then(res => {
+            if (res.code !== 0) { alert(res.message); return; }
+            document.getElementById('fav-count').textContent = res.count;
+            document.getElementById('fav-btn').classList.toggle('active', res.favorited);
+        });
 }
 </script>
 {% endblock %}

@@ -4,16 +4,19 @@
 {% block content %}
 <div class="profile-container">
     <div class="profile-card">
+        {% if user_info.avatar %}
+        <img src="{{ user_info.avatar }}" class="big-avatar center" alt="头像">
+        {% else %}
         <div class="avatar">👤</div>
+        {% endif %}
         <h2 class="profile-name">{{ user_info.nickname }}</h2>
 
-        <!-- 年龄 / 性别 -->
+        <!-- 年龄 / 性别 / 信用分 -->
         <div class="profile-detail">
             {% if user_info.age %}<span>{{ user_info.age }}岁</span>{% endif %}
             {% if user_info.gender %}<span>{{ user_info.gender }}</span>{% endif %}
-            {% if not user_info.age and not user_info.gender %}
-                <span class="hint">资料待完善</span>
-            {% endif %}
+            <span>信用 {{ user_info.credit }}</span>
+            {% if not user_info.age and not user_info.gender %}<span class="hint">资料待完善</span>{% endif %}
         </div>
 
         <!-- 兴趣标签 -->
@@ -34,35 +37,38 @@
 
         <div class="profile-actions">
             <a href="/profile/edit" class="btn-secondary">✏️ 编辑资料</a>
+            <a href="/change_password" class="btn-secondary">🔒 修改密码</a>
             <a href="/logout" class="btn-secondary btn-logout">退出登录</a>
         </div>
     </div>
 
     <h3 class="section-title">我发布的帖子</h3>
-
     <div class="my-posts">
         {% if my_posts %}
             {% for post in my_posts %}
             <div class="my-post-card">
                 <div class="my-post-header">
-                    <span class="post-category cat-{{ post[2] }}">{{ post[2] }}</span>
-                    <span class="post-time">{{ post[3] }}</span>
+                    <span class="post-category cat-{{ post.category }}">{{ post.category }}</span>
+                    <span class="post-time">{{ post.create_time }}</span>
                 </div>
                 <h4 class="my-post-title">
-                    <a href="/post/{{ post[0] }}">{{ post[1] }}</a>
+                    <a href="/post/{{ post.id }}">{{ post.title }}</a>
                 </h4>
                 <div class="my-post-actions">
-                    {% if post[4] == 1 %}
+                    {% if post.status == 1 %}
                         <span class="status-active">✅ 进行中</span>
                     {% else %}
                         <span class="status-deleted">🗑️ 已删除</span>
                     {% endif %}
-                    {% if post[4] == 1 %}
-                    <form method="POST" action="/post/{{ post[0] }}/delete" style="display:inline;"
-                          onsubmit="return confirm('确定要删除这条帖子吗？');">
-                        <button type="submit" class="btn-delete-small">删除</button>
-                    </form>
-                    {% endif %}
+                    <span>
+                        {% if post.status == 1 %}
+                        <a href="/post/{{ post.id }}/edit" class="btn-delete-small">编辑</a>
+                        <form method="POST" action="/post/{{ post.id }}/delete" style="display:inline;"
+                              onsubmit="return confirm('确定要删除这条帖子吗？');">
+                            <button type="submit" class="btn-delete-small">删除</button>
+                        </form>
+                        {% endif %}
+                    </span>
                 </div>
             </div>
             {% endfor %}
@@ -71,6 +77,27 @@
                 <div class="empty-icon">📝</div>
                 <p>你还没有发布过帖子</p>
                 <a href="/publish" class="btn-secondary">去发帖</a>
+            </div>
+        {% endif %}
+    </div>
+
+    <h3 class="section-title">我收藏的帖子</h3>
+    <div class="my-posts">
+        {% if fav_posts %}
+            {% for post in fav_posts %}
+            <a href="/post/{{ post.id }}" class="my-post-card" style="display:block;">
+                <div class="my-post-header">
+                    <span class="post-category cat-{{ post.category }}">{{ post.category }}</span>
+                    <span class="post-time">{{ post.create_time }}</span>
+                </div>
+                <h4 class="my-post-title">{{ post.title }}</h4>
+                <div class="post-author">发布者：{{ post.nickname }}</div>
+            </a>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">⭐</div>
+                <p>还没有收藏的帖子，看到感兴趣的帖子点"收藏"吧</p>
             </div>
         {% endif %}
     </div>

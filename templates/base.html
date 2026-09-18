@@ -14,13 +14,28 @@
             <div class="nav-links">
                 {% if logged_in %}
                     <a href="/publish" class="nav-btn">＋ 发帖</a>
-                    <a href="/profile" class="nav-btn">👤 我的</a>
+                    <a href="/notifications" class="nav-btn nav-bell">🔔
+                        <span class="badge" id="unread-badge" style="display:none;">0</span>
+                    </a>
+                    <a href="/profile" class="nav-btn">
+                        {% if avatar %}<img src="{{ avatar }}" class="nav-avatar" alt="头像">{% else %}👤{% endif %}
+                        {{ nickname }}
+                    </a>
                 {% else %}
-                    <a href="/login" class="nav-btn">登录</a>
+                    <a href="/login" class="nav-btn">登录 / 注册</a>
                 {% endif %}
             </div>
         </div>
     </nav>
+
+    <!-- 操作提示（评论成功/举报成功等） -->
+    {% with msgs = get_flashed_messages() %}
+        {% if msgs %}
+        <div class="flash-box">
+            {% for m in msgs %}<div class="flash-msg">{{ m }}</div>{% endfor %}
+        </div>
+        {% endif %}
+    {% endwith %}
 
     <!-- 主内容区 -->
     <main class="main-content">
@@ -29,7 +44,22 @@
 
     <!-- 底部导航 -->
     <footer class="footer">
-        <p>校园搭子 · 第1迭代MVP版本</p>
+        <p>校园搭子 · 第2迭代</p>
     </footer>
+
+    {% if logged_in %}
+    <script>
+        // 顶部铃铛显示未读通知数
+        fetch('/api/unread_count')
+            .then(r => r.json())
+            .then(data => {
+                const badge = document.getElementById('unread-badge');
+                if (data.count > 0) {
+                    badge.textContent = data.count > 99 ? '99+' : data.count;
+                    badge.style.display = 'inline-block';
+                }
+            });
+    </script>
+    {% endif %}
 </body>
 </html>

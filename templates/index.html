@@ -2,10 +2,16 @@
 {% block title %}校园搭子 - 首页{% endblock %}
 
 {% block content %}
+<!-- 搜索栏 -->
+<form class="search-bar" method="GET" action="/">
+    <input type="text" name="q" value="{{ q }}" placeholder="搜索帖子标题或内容，如：篮球">
+    <button type="submit" class="search-btn">搜索</button>
+</form>
+
 <!-- 分类筛选栏 -->
 <div class="category-bar">
     {% for cat in categories %}
-    <a href="/?category={{ cat }}"
+    <a href="/?category={{ cat }}{% if q %}&q={{ q }}{% endif %}"
        class="category-tag {{ 'active' if current_cat == cat else '' }}">
         {{ cat }}
     </a>
@@ -16,19 +22,24 @@
 <div class="post-list">
     {% if posts %}
         {% for post in posts %}
-        <a href="/post/{{ post[0] }}" class="post-card">
+        <a href="/post/{{ post.id }}" class="post-card">
             <div class="post-header">
-                <span class="post-category cat-{{ post[2] }}">{{ post[2] }}</span>
-                <span class="post-time">{{ post[3] }}</span>
+                <span class="post-category cat-{{ post.category }}">{{ post.category }}</span>
+                <span class="post-time">{{ post.create_time }}</span>
             </div>
-            <h3 class="post-title">{{ post[1] }}</h3>
-            <p class="post-author">发布者：{{ post[4] }}</p>
+            <h3 class="post-title">{{ post.title }}</h3>
+            <div class="post-author">
+                {% if post.avatar %}<img src="{{ post.avatar }}" class="mini-avatar" alt="头像">{% else %}👤{% endif %}
+                {{ post.nickname }}
+                {% if post.age %}<span class="author-age">{{ post.age }}岁</span>{% endif %}
+                <span class="post-like">❤ {{ post.like_count }}</span>
+            </div>
         </a>
         {% endfor %}
     {% else %}
         <div class="empty-state">
             <div class="empty-icon">📭</div>
-            <p>暂无帖子，快来发布第一条吧！</p>
+            {% if q %}<p>没有找到和"{{ q }}"相关的帖子</p>{% else %}<p>暂无帖子，快来发布第一条吧！</p>{% endif %}
             <a href="/publish" class="btn-secondary">去发帖</a>
         </div>
     {% endif %}

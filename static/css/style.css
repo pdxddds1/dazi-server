@@ -539,3 +539,293 @@ a {
     border-color: #667eea;
     color: #667eea;
 }
+
+/* ===== 搜索栏 ===== */
+.search-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.search-bar input {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    font-size: 14px;
+    outline: none;
+    background: white;
+}
+
+.search-bar input:focus {
+    border-color: #667eea;
+}
+
+.search-btn {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+/* ===== 头像 ===== */
+.mini-avatar {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    vertical-align: -5px;
+    margin-right: 4px;
+    object-fit: cover;
+}
+
+.big-avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.big-avatar.center {
+    display: block;
+    margin: 0 auto 12px;
+    font-size: 56px;
+    text-align: center;
+    line-height: 72px;
+}
+
+.nav-avatar {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    vertical-align: -5px;
+    margin-right: 4px;
+    object-fit: cover;
+}
+
+.author-age {
+    color: #aaa;
+    font-size: 12px;
+    margin-left: 4px;
+}
+
+.post-like {
+    float: right;
+    color: #999;
+    font-size: 13px;
+}
+
+/* ===== 通知铃铛 ===== */
+.nav-bell {
+    position: relative;
+}
+
+.badge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: #ff5252;
+    color: white;
+    font-size: 10px;
+    border-radius: 10px;
+    padding: 0 5px;
+    line-height: 16px;
+    min-width: 16px;
+    text-align: center;
+}
+
+/* ===== 提示消息（flash） ===== */
+.flash-box {
+    max-width: 750px;
+    margin: 12px auto 0;
+    padding: 0 16px;
+}
+
+.flash-msg {
+    background: #e8f5e9;
+    color: #2e7d32;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+/* ===== 详情页作者行 ===== */
+.detail-author {
+    display: block;
+    color: #555;
+    font-size: 14px;
+    margin-bottom: 12px;
+}
+
+/* ===== 点赞收藏/操作按钮 ===== */
+.detail-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 16px 0 4px;
+}
+
+.action-btn {
+    display: inline-block;
+    padding: 8px 16px;
+    border: 1px solid #e0e0e0;
+    background: white;
+    border-radius: 20px;
+    font-size: 14px;
+    color: #555;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.action-btn.active {
+    background: #eef0ff;
+    border-color: #667eea;
+    color: #667eea;
+}
+
+.action-btn.danger {
+    color: #c62828;
+    border-color: #ffcdd2;
+}
+
+.report-form {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.report-input {
+    width: 130px;
+    padding: 6px 10px;
+    border: 1px solid #ddd;
+    border-radius: 16px;
+    font-size: 12px;
+}
+
+/* ===== 作者卡片 ===== */
+.author-card {
+    margin-top: 12px;
+}
+
+.author-card-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.author-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+}
+
+.author-bio {
+    font-size: 13px;
+    color: #888;
+}
+
+.btn-sm {
+    padding: 6px 14px;
+    font-size: 13px;
+    margin-left: auto;
+}
+
+/* ===== 评论区 ===== */
+.comment-form {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.comment-form input {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    font-size: 14px;
+    outline: none;
+}
+
+.comment-form input:focus {
+    border-color: #667eea;
+}
+
+.btn-comment {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.comment-item {
+    display: flex;
+    gap: 10px;
+    padding: 12px 0;
+    border-top: 1px solid #f0f0f0;
+}
+
+.comment-body {
+    flex: 1;
+}
+
+.comment-head {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2px;
+}
+
+.comment-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: #667eea;
+}
+
+.comment-text {
+    font-size: 14px;
+    color: #444;
+}
+
+/* ===== 通知中心 ===== */
+.note-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.note-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 4px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.note-icon {
+    font-size: 22px;
+}
+
+.note-body {
+    flex: 1;
+}
+
+.note-content {
+    font-size: 14px;
+    color: #333;
+}
+
+.note-time {
+    font-size: 12px;
+    color: #999;
+    margin-top: 2px;
+}
+
+.note-go {
+    color: #667eea;
+    font-size: 13px;
+}
