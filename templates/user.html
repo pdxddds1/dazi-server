@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}{{ user.nickname }}的主页 - 校园搭子{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="profile-card">
+        {% if user.avatar %}
+        <img src="{{ user.avatar }}" class="big-avatar center" alt="头像">
+        {% else %}
+        <div class="avatar">👤</div>
+        {% endif %}
+        <h2 class="profile-name">{{ user.nickname }}
+            {% if user.student_verified %}<span class="verified-tag">🎓 已学生认证</span>{% endif %}
+        </h2>
+
+        <div class="profile-detail">
+            {% if online_now %}<span class="online-text">🟢 在线</span>{% else %}<span class="offline-text">⚪ 离线</span>{% endif %}
+            {% if user.age %}<span>{{ user.age }}岁</span>{% endif %}
+            {% if user.gender %}<span>{{ user.gender }}</span>{% endif %}
+            <span><span class="level-badge">Lv.{{ user.level }}</span></span>
+            <span>加入于 {{ user.create_time[:10] }}</span>
+        </div>
+
+        <!-- 关注 / 粉丝 数字（贴吧风格） -->
+        <div class="tieba-stats">
+            <a href="/friends?tab=following" class="tieba-stat">
+                <span class="tieba-stat-num">{{ following_count }}</span>
+                <span class="tieba-stat-label">关注</span>
+            </a>
+            <a href="/friends?tab=fans" class="tieba-stat">
+                <span class="tieba-stat-num">{{ fan_count }}</span>
+                <span class="tieba-stat-label">粉丝</span>
+            </a>
+        </div>
+
+        {% if interests %}
+        <div class="profile-tags">
+            {% for tag in interests %}
+            <span class="tag-badge">{{ tag }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if user.bio %}
+        <p class="profile-bio">“{{ user.bio }}”</p>
+        {% endif %}
+
+        {% if logged_in and not is_self %}
+            <!-- 贴吧式关注按钮 -->
+            <button class="tieba-follow-btn big {{ 'followed' if is_following else '' }}"
+                    id="user-follow-btn" onclick="toggleFollow()">
+                {{ '已关注' if is_following else '+ 关注TA' }}
+            </button>
+
+            {% if is_blocked %}
+            <form method="POST" action="/user/{{ user.id }}/unblock">
+                <button type="submit" class="btn-secondary btn-logout">解除拉黑</button>
+            </form>
+            {% else %}
+            <form method="POST" action="/user/{{ user.id }}/block"
+                  onsubmit="return confirm('确定拉黑该用户？首页将不再显示TA的帖子，TA也不能评论你的帖子');">
+                <button type="submit" class="btn-secondary btn-logout">拉黑</button>
+            </form>
+            {% endif %}
+            {% if is_mutual %}
+            <a href="/chat/{{ user.id }}" class="btn-primary btn-sm">💬 发消息</a>
+            {% endif %}
+        {% elif not logged_in %}
+            <!-- 未登录：引导登录关注 -->
+            <a href="/login?next=/user/{{ user.id }}" class="tieba-follow-btn big">🔐 登录后关注</a>
+        {% endif %}
+    </div>
+
+    <h3 class="section-title">TA发布的帖子</h3>
+    <div class="post-list">
+        {% if posts %}
+            {% for post in posts %}
+            <a href="/post/{{ post.id }}" class="post-card">
+                <div class="post-header">
+                    <span class="post-category cat-{{ post.category }}">{{ post.category }}</span>
+                    <span class="post-time">{{ post.create_time }}</span>
+                </div>
+                <h3 class="post-title">{{ post.title }}</h3>
+                <div class="post-author">❤ {{ post.like_count }}</div>
+            </a>
+            {% endfor %}
+        {% else %}
+        <div class="empty-state"><p>TA还没有发布过帖子</p></div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function toggleFollow() {
+    fetch('/user/{{ user.id }}/follow', { method: 'POST' })
+        .then(r => r.json())
+        .then(res => {
+            if (res.code !== 0) { alert(res.message); return; }
+            const btn = document.getElementById('user-follow-btn');
+            btn.classList.toggle('followed', res.following);
+            btn.textContent = res.following ? '已关注' : '+ 关注TA';
+            // 同步更新粉丝数字
+            const fanNum = document.querySelector('.tieba-stat:nth-child(2) .tieba-stat-num');
+            if (fanNum) fanNum.textContent = res.count;
+        });
+}
+</script>
+{% endblock %}

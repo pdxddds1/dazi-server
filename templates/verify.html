@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}学生认证 - 校园搭子{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <h2 class="auth-title">🎓 学生实名认证</h2>
+        <p class="auth-subtitle">校园搭子仅限在校大学生使用，认证后显示"已学生认证"标识。<br>学校、学号、真实姓名仅用于认证审核，<strong>不会公开显示</strong>。</p>
+
+        {% if me.student_verified %}
+        <div class="verified-big">
+            <div style="font-size:48px;">✅</div>
+            <p style="color:#52c41a;font-weight:bold;font-size:18px;">你已完成学生认证</p>
+            <p>学校：{{ me.school or '未填写' }}</p>
+            <p style="color:#999;font-size:13px;">学号和真实姓名已加密保存，其他用户不可见</p>
+        </div>
+        {% else %}
+        {% if error %}<div class="error-msg">{{ error }}</div>{% endif %}
+        <form method="POST" action="/verify">
+            <div class="form-group">
+                <label>学校名称</label>
+                <input type="text" name="school" placeholder="例如：西安交通大学" required>
+            </div>
+            <div class="form-group">
+                <label>学号</label>
+                <input type="text" name="student_id" placeholder="请输入学号" required>
+            </div>
+            <div class="form-group">
+                <label>真实姓名</label>
+                <input type="text" name="real_name" placeholder="请输入真实姓名" required>
+            </div>
+            <button type="submit" class="btn-primary">提交认证</button>
+        </form>
+        <p style="color:#999;font-size:12px;margin-top:12px;">
+            信息仅用于身份核验，不会对外公开。
+        </p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

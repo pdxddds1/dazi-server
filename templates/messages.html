@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}消息 - 校园搭子{% endblock %}
+
+{% block content %}
+<h2 class="section-title">💬 我的消息</h2>
+
+{% if chats %}
+<div class="chat-list">
+    {% for c in chats %}
+    <a href="/chat/{{ c.id }}" class="chat-item">
+        <div class="chat-avatar-wrap">
+            {% if c.avatar %}<img src="{{ c.avatar }}" class="chat-avatar">{% else %}<div class="chat-avatar">👤</div>{% endif %}
+            {% if c.show_online and is_online_fn(c.last_active) %}
+            <span class="online-dot" title="在线"></span>
+            {% endif %}
+        </div>
+        <div class="chat-info">
+            <div class="chat-name-row">
+                <span class="chat-name">{{ c.nickname }}</span>
+                {% if c.student_verified %}<span class="verified-tag">🎓 已认证</span>{% endif %}
+                {% if c.last_time %}<span class="chat-time">{{ c.last_time[5:16] }}</span>{% endif %}
+            </div>
+            <div class="chat-last">
+                {{ c.last_msg or '（位置消息）' }}
+                {% if c.unread > 0 %}<span class="chat-badge">{{ c.unread }}</span>{% endif %}
+            </div>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <div style="font-size:48px;margin-bottom:12px;">💬</div>
+    <p>还没有聊天记录</p>
+    <p style="color:#999;font-size:14px;">去互相关注的好友主页，点"发消息"开始聊天吧</p>
+</div>
+{% endif %}
+{% endblock %}

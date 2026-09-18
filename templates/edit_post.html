@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}编辑帖子 - 校园搭子{% endblock %}
+
+{% block content %}
+<div class="publish-container">
+    <h2 class="page-title">编辑帖子</h2>
+    {% if error %}<div class="error-msg">{{ error }}</div>{% endif %}
+    <form method="POST" action="/post/{{ post.id }}/edit">
+        <div class="form-group">
+            <label>标题 <span class="required">*</span></label>
+            <input type="text" name="title" value="{{ post.title }}" required>
+        </div>
+        <div class="form-group">
+            <label>分类 <span class="required">*</span></label>
+            <select name="category">
+                {% for cat in categories %}
+                <option value="{{ cat }}" {{ 'selected' if post.category == cat else '' }}>{{ cat }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label>内容 <span class="required">*</span></label>
+            <textarea name="content" rows="5" required>{{ post.content }}</textarea>
+        </div>
+        <div class="form-group">
+            <label>联系方式 <span class="required">*</span></label>
+            <input type="text" name="contact" value="{{ post.contact }}" required>
+        </div>
+        <button type="submit" class="btn-primary">保存修改</button>
+        <a href="/post/{{ post.id }}" class="btn-secondary btn-block" style="text-align:center;">取消</a>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}我的黑名单 - 校园搭子{% endblock %}
+
+{% block content %}
+<div class="tieba-wrap">
+    <div class="blocklist-head">
+        <h2 class="page-title">🚫 我的黑名单</h2>
+        <p class="hint">这些人的帖子不会出现在首页，也不能评论你的帖子。随时可以解除。</p>
+    </div>
+
+    <div class="tieba-user-list">
+        {% if users %}
+            {% for u in users %}
+            <div class="tieba-user-card">
+                <a href="/user/{{ u.id }}" class="tieba-user-main">
+                    {% if u.avatar %}
+                    <img src="{{ u.avatar }}" class="tieba-avatar" alt="头像">
+                    {% else %}
+                    <div class="tieba-avatar">👤</div>
+                    {% endif %}
+                    <div class="tieba-user-info">
+                        <div class="tieba-username">{{ u.nickname }}
+                            <span class="level-badge">Lv.{{ u.level }}</span>
+                        </div>
+                        <div class="tieba-user-bio">
+                            {% if u.bio %}{{ u.bio }}{% else %}这个人很懒，什么都没写~{% endif %}
+                        </div>
+                    </div>
+                </a>
+                <div class="tieba-user-side">
+                    <form method="POST" action="/user/{{ u.id }}/unblock"
+                          onsubmit="return confirm('确定解除拉黑吗？');">
+                        <button type="submit" class="tieba-follow-btn">解除拉黑</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">🕊️</div>
+            <p>黑名单是空的，没有拉黑任何人</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

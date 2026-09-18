@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}编辑资料 - 校园搭子{% endblock %}
+
+{% block content %}
+<div class="publish-container">
+    <h2 class="page-title">编辑个人资料</h2>
+    <p class="auth-subtitle">完善资料，更容易找到同好搭子～</p>
+
+    {% if error %}
+    <div class="error-msg">{{ error }}</div>
+    {% endif %}
+
+    <form method="POST" action="/profile/edit" enctype="multipart/form-data">
+        <div class="form-group">
+            <label>头像</label>
+            {% if avatar %}
+            <div style="margin-bottom:8px;">
+                <img src="{{ avatar }}" class="big-avatar" alt="当前头像">
+            </div>
+            {% endif %}
+            <input type="file" name="avatar" accept="image/png,image/jpeg,image/gif,image/webp">
+            <div class="hint">支持 png/jpg/gif/webp，不超过2MB；不选则保持原头像</div>
+        </div>
+
+        <div class="form-group">
+            <label>昵称 <span class="required">*</span></label>
+            <input type="text" name="nickname" value="{{ nickname }}" maxlength="20"
+                   placeholder="大家怎么称呼你？" required>
+        </div>
+
+        <div class="form-group">
+            <label>年龄</label>
+            <input type="number" name="age" value="{{ age }}" min="10" max="100"
+                   placeholder="例如：20">
+        </div>
+
+        <div class="form-group">
+            <label>性别</label>
+            <select name="gender">
+                <option value="">保密</option>
+                <option value="男" {{ 'selected' if gender == '男' else '' }}>男</option>
+                <option value="女" {{ 'selected' if gender == '女' else '' }}>女</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>兴趣标签</label>
+            <input type="text" name="interests" value="{{ interests }}"
+                   placeholder="多个标签用逗号分隔，如：运动, 阅读, 游戏">
+            <div class="hint">点下面的推荐标签可以快速添加（自动去重、自动加逗号）</div>
+            <div class="tag-picker">
+                {% for t in suggest_tags %}
+                <span class="suggest-tag" onclick="addTag('{{ t }}')">{{ t }}</span>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>一句话介绍</label>
+            <textarea name="bio" rows="3" maxlength="100"
+                      placeholder="例如：爱打篮球的大三学生，周末想找人一起运动">{{ bio }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label>
+                <input type="checkbox" name="contact_public" value="1"
+                       {{ 'checked' if contact_public else '' }}>
+                帖子里的联系方式对所有人可见（不勾选则仅登录用户可见）
+            </label>
+        </div>
+
+        <button type="submit" class="btn-primary">保存</button>
+        <a href="/profile" class="btn-secondary btn-block" style="text-align:center;">返回</a>
+    </form>
+</div>
+
+<script>
+// 点击推荐标签，追加到输入框（已有标签不重复添加）
+function addTag(tag) {
+    const input = document.querySelector('input[name="interests"]');
+    const current = input.value.replace(/，/g, ',').split(',').map(s => s.trim()).filter(Boolean);
+    if (!current.includes(tag)) {
+        current.push(tag);
+        input.value = current.join(', ');
+    }
+}
+</script>
+{% endblock %}

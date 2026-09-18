@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}通知中心 - 校园搭子{% endblock %}
+
+{% block content %}
+<div class="publish-container">
+    <h2 class="page-title">通知中心</h2>
+    {% if notes %}
+    <div class="note-list">
+        {% for n in notes %}
+        <a href="{% if n.type == 'follow' %}/user/{{ n.from_user_id }}{% else %}/post/{{ n.post_id }}{% endif %}" class="note-item">
+            <span class="note-icon">
+                {% if n.type == 'comment' %}💬{% elif n.type == 'like' %}❤{% elif n.type == 'follow' %}👥{% else %}⭐{% endif %}
+            </span>
+            <div class="note-body">
+                <div class="note-content">{{ n.content }}</div>
+                <div class="note-time">{{ n.create_time }}</div>
+            </div>
+            <span class="note-go">{% if n.type == 'follow' %}看看 ›{% else %}查看 ›{% endif %}</span>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">🔔</div>
+        <p>暂时没有通知</p>
+        <p class="hint">有人评论、点赞、收藏你的帖子时，会在这里提醒你</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

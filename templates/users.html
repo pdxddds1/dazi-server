@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}搜索搭子 - 校园搭子{% endblock %}
+
+{% block content %}
+<div class="tieba-wrap">
+    <!-- 搜索框 -->
+    <form action="/users" method="GET" class="search-bar">
+        <input type="text" name="q" value="{{ q }}" placeholder="输入昵称，搜找搭子～" class="search-input">
+        <button type="submit" class="search-btn">🔍 搜索</button>
+    </form>
+
+    {% if q %}
+    <p class="search-tip">找到 {{ users|length }} 个昵称含"{{ q }}"的搭子</p>
+    {% endif %}
+
+    <div class="tieba-user-list">
+        {% if users %}
+            {% for u in users %}
+            <div class="tieba-user-card">
+                <a href="/user/{{ u.id }}" class="tieba-user-main">
+                    {% if u.avatar %}
+                    <img src="{{ u.avatar }}" class="tieba-avatar" alt="头像">
+                    {% else %}
+                    <div class="tieba-avatar">👤</div>
+                    {% endif %}
+                    <div class="tieba-user-info">
+                        <div class="tieba-username">{{ u.nickname }}
+                            <span class="level-badge">Lv.{{ u.level }}</span>
+                        </div>
+                        <div class="tieba-user-bio">
+                            {% if u.bio %}{{ u.bio }}{% else %}这个人很懒，什么都没写~{% endif %}
+                        </div>
+                    </div>
+                </a>
+                <div class="tieba-user-side">
+                    <span class="tieba-fan-count">粉丝 {{ u.fan_count }}</span>
+                    {% if logged_in and u.id != session.get('user_id') %}
+                    <button class="tieba-follow-btn {{ 'followed' if u.is_following else '' }}"
+                            onclick="toggleFollow({{ u.id }}, this)">
+                        {{ '已关注' if u.is_following else '+ 关注' }}
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% elif q %}
+        <div class="empty-state">
+            <div class="empty-icon">😅</div>
+            <p>没找到昵称含"{{ q }}"的搭子，换个关键词试试</p>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">🔍</div>
+            <p>输入昵称，找到你想找的搭子</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function toggleFollow(userId, btn) {
+    fetch('/user/' + userId + '/follow', { method: 'POST' })
+        .then(r => r.json())
+        .then(res => {
+            if (res.code !== 0) { alert(res.message); return; }
+            btn.classList.toggle('followed', res.following);
+            btn.textContent = res.following ? '已关注' : '+ 关注';
+        });
+}
+</script>
+{% endblock %}
