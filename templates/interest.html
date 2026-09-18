@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+<html>
+<head>
+    <title>帖子详情</title>
+</head>
+<body>
+    <h2 class="profile">你的兴趣标签</h2>
+    <p class="profile_error">显示你的兴趣标签</p>
+    <form id="add_post_interests" onsubmit="add_post_interests()">
+        <input type="text" id="post_interests_input" placeholder="添加兴趣标签（如：运动, 健康)">
+        <button type="submit" class="btn">添加</button>
+    </form>
+    <p class="profile_error">如有错误，请阅读说明</p>
+    <script>
+        // 添加兴趣标签到数据库
+        document.getElementById('post_interests_input').addEventListener('change', function(e) {
+            const interest = e.target.value;
+            if (interest) {
+                // 在表中插入兴趣标签
+                const query = 'INSERT INTO posts_interests (post_interests) VALUES (?)';
+                const params = [interest];
+                db333.db
+                    .cur
+                    .insert(params)
+                    .execute(query);
+                db333.db
+                    .cur
+                    .commit();
+            } else {
+                // 没有兴趣标签，弹出提示提示
+                alert('请添加兴趣标签');
+                e.target.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>

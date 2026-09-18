@@ -471,3 +471,71 @@ a {
     color: #aaa;
     font-size: 12px;
 }
+
+/* ===== 个人资料展示（个人中心） ===== */
+.profile-detail {
+    color: #888;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.profile-detail span {
+    margin: 0 6px;
+}
+
+.profile-tags {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.tag-badge {
+    background: #eef0ff;
+    color: #667eea;
+    padding: 4px 12px;
+    border-radius: 14px;
+    font-size: 13px;
+}
+
+.profile-bio {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 16px;
+}
+
+.profile-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.btn-logout {
+    color: #999;
+    border-color: #ddd;
+}
+
+/* ===== 推荐兴趣标签（编辑资料页） ===== */
+.tag-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.suggest-tag {
+    background: #f5f5f7;
+    border: 1px solid #e0e0e0;
+    padding: 4px 12px;
+    border-radius: 14px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.suggest-tag:hover {
+    background: #eef0ff;
+    border-color: #667eea;
+    color: #667eea;
+}

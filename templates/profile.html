@@ -5,8 +5,37 @@
 <div class="profile-container">
     <div class="profile-card">
         <div class="avatar">👤</div>
-        <h2 class="profile-name">{{ nickname }}</h2>
-        <a href="/logout" class="btn-secondary">退出登录</a>
+        <h2 class="profile-name">{{ user_info.nickname }}</h2>
+
+        <!-- 年龄 / 性别 -->
+        <div class="profile-detail">
+            {% if user_info.age %}<span>{{ user_info.age }}岁</span>{% endif %}
+            {% if user_info.gender %}<span>{{ user_info.gender }}</span>{% endif %}
+            {% if not user_info.age and not user_info.gender %}
+                <span class="hint">资料待完善</span>
+            {% endif %}
+        </div>
+
+        <!-- 兴趣标签 -->
+        {% if user_info.interests %}
+        <div class="profile-tags">
+            {% for tag in user_info.interests %}
+            <span class="tag-badge">{{ tag }}</span>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="hint" style="margin: 6px 0 12px;">还没有兴趣标签，完善后更容易找到同好～</div>
+        {% endif %}
+
+        <!-- 一句话介绍 -->
+        {% if user_info.bio %}
+        <p class="profile-bio">“{{ user_info.bio }}”</p>
+        {% endif %}
+
+        <div class="profile-actions">
+            <a href="/profile/edit" class="btn-secondary">✏️ 编辑资料</a>
+            <a href="/logout" class="btn-secondary btn-logout">退出登录</a>
+        </div>
     </div>
 
     <h3 class="section-title">我发布的帖子</h3>
