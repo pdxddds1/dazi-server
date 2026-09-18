@@ -13,6 +13,7 @@
 
         <form method="POST" action="/login">
             <input type="hidden" name="action" value="{{ action }}">
+            <input type="hidden" name="next" value="{{ next or '' }}">
 
             <div class="form-group">
                 <label>手机号</label>

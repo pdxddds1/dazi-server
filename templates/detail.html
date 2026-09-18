@@ -17,7 +17,7 @@
             {{ post.nickname }}
             {% if post.age %}<span class="author-age">{{ post.age }}岁</span>{% endif %}
             {% if post.gender %}<span class="author-age">{{ post.gender }}</span>{% endif %}
-            <span class="author-age">信用 {{ post.credit }}</span>
+            <span class="author-age"><span class="level-badge">Lv.{{ post.level }}</span></span>
         </a>
 
         <div class="detail-content">{{ post.content }}</div>
@@ -46,8 +46,8 @@
             <button class="action-btn {{ 'active' if favorited else '' }}" id="fav-btn"
                     onclick="toggleFav()">⭐ 收藏 <span id="fav-count">{{ fav_count }}</span></button>
             {% else %}
-            <span class="action-btn">❤ <span>{{ like_count }}</span></span>
-            <span class="action-btn">⭐ 收藏 <span>{{ fav_count }}</span></span>
+            <a href="/login?next=/post/{{ post.id }}" class="action-btn">❤ <span>{{ like_count }}</span></a>
+            <a href="/login?next=/post/{{ post.id }}" class="action-btn">⭐ 收藏 <span>{{ fav_count }}</span></a>
             {% endif %}
 
             {% if is_owner %}
@@ -66,7 +66,7 @@
         </div>
     </div>
 
-    <!-- 作者卡片：兴趣标签、自我介绍 -->
+    <!-- 作者卡片：兴趣标签、自我介绍、关注按钮 -->
     <div class="detail-card author-card">
         <div class="author-card-head">
             {% if post.avatar %}<img src="{{ post.avatar }}" class="big-avatar" alt="头像">{% else %}<div class="big-avatar">👤</div>{% endif %}
@@ -74,7 +74,15 @@
                 <a href="/user/{{ post.author_id }}" class="author-name">{{ post.nickname }}</a>
                 {% if post.bio %}<div class="author-bio">{{ post.bio }}</div>{% endif %}
             </div>
-            <a href="/user/{{ post.author_id }}" class="btn-secondary btn-sm">查看主页</a>
+            <div class="author-card-actions">
+                {% if logged_in and not is_owner %}
+                <button class="tieba-follow-btn {{ 'followed' if is_following_author else '' }}"
+                        id="author-follow-btn" onclick="toggleFollowAuthor()">
+                    {{ '已关注' if is_following_author else '+ 关注' }}
+                </button>
+                {% endif %}
+                <a href="/user/{{ post.author_id }}" class="btn-secondary btn-sm">查看主页</a>
+            </div>
         </div>
         {% if author_interests %}
         <div class="profile-tags" style="justify-content:flex-start;">
@@ -91,6 +99,11 @@
 
         {% if logged_in and not blocked_by_author %}
         <form method="POST" action="/post/{{ post.id }}/comment" class="comment-form">
+            <input type="hidden" name="parent_id" id="reply-parent" value="">
+            <div id="reply-tip" class="reply-tip" style="display:none;">
+                回复 <b id="reply-name"></b>
+                <a href="javascript:void(0)" onclick="cancelReply()">取消</a>
+            </div>
             <input type="text" name="content" maxlength="200" required
                    placeholder="友善评论，先聊聊再决定要不要一起玩～">
             <button type="submit" class="btn-comment">评论</button>
@@ -98,7 +111,9 @@
         {% elif blocked_by_author %}
         <div class="tip">你已被该帖作者拉黑，无法评论</div>
         {% else %}
-        <div class="tip"><a href="/login">登录后可以评论</a></div>
+        <div class="tip">
+            <a href="/login?next=/post/{{ post.id }}" class="btn-primary btn-sm" style="display:inline-block;">🔐 登录 / 注册后评论</a>
+        </div>
         {% endif %}
 
         <div class="comment-list">
@@ -107,10 +122,17 @@
                 {% if cm.avatar %}<img src="{{ cm.avatar }}" class="mini-avatar" alt="头像">{% else %}👤{% endif %}
                 <div class="comment-body">
                     <div class="comment-head">
-                        <a href="/user/{{ cm.user_id }}" class="comment-name">{{ cm.nickname }}</a>
+                        <a href="/user/{{ cm.user_id }}" class="comment-name">{{ cm.nickname }} <span class="level-badge mini">Lv.{{ cm.level }}</span></a>
                         <span class="post-time">{{ cm.create_time }}</span>
                     </div>
-                    <div class="comment-text">{{ cm.content }}</div>
+                    <div class="comment-text">
+                        {% if cm.parent_id and cm.reply_to_name %}<span class="reply-to">回复 @{{ cm.reply_to_name }}：</span>{% endif %}
+                        {{ cm.content }}
+                    </div>
+                    {% if logged_in %}
+                    <a href="javascript:void(0)" class="reply-link"
+                       onclick="startReply({{ cm.id }}, '{{ cm.nickname }}')">回复</a>
+                    {% endif %}
                 </div>
             </div>
             {% else %}
@@ -153,6 +175,28 @@ function toggleFav() {
             if (res.code !== 0) { alert(res.message); return; }
             document.getElementById('fav-count').textContent = res.count;
             document.getElementById('fav-btn').classList.toggle('active', res.favorited);
+        });
+}
+
+function startReply(cid, name) {
+    document.getElementById('reply-parent').value = cid;
+    document.getElementById('reply-name').textContent = name;
+    document.getElementById('reply-tip').style.display = 'block';
+    document.querySelector('.comment-form input[name=content]').focus();
+}
+function cancelReply() {
+    document.getElementById('reply-parent').value = '';
+    document.getElementById('reply-tip').style.display = 'none';
+}
+
+function toggleFollowAuthor() {
+    fetch('/user/{{ post.author_id }}/follow', { method: 'POST' })
+        .then(r => r.json())
+        .then(res => {
+            if (res.code !== 0) { alert(res.message); return; }
+            const btn = document.getElementById('author-follow-btn');
+            btn.classList.toggle('followed', res.following);
+            btn.textContent = res.following ? '已关注' : '+ 关注';
         });
 }
 </script>

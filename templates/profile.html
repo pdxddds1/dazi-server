@@ -9,14 +9,39 @@
         {% else %}
         <div class="avatar">👤</div>
         {% endif %}
-        <h2 class="profile-name">{{ user_info.nickname }}</h2>
+        <h2 class="profile-name">{{ user_info.nickname }}
+            {% if user_info.student_verified %}<span class="verified-tag">🎓 已学生认证</span>{% endif %}
+        </h2>
 
         <!-- 年龄 / 性别 / 信用分 -->
         <div class="profile-detail">
             {% if user_info.age %}<span>{{ user_info.age }}岁</span>{% endif %}
             {% if user_info.gender %}<span>{{ user_info.gender }}</span>{% endif %}
-            <span>信用 {{ user_info.credit }}</span>
+            <span><span class="level-badge">Lv.{{ user_info.level }}</span></span>
             {% if not user_info.age and not user_info.gender %}<span class="hint">资料待完善</span>{% endif %}
+        </div>
+
+        <!-- 等级经验条 -->
+        <div class="exp-bar">
+            <div class="exp-info">
+                <span>Lv.{{ user_info.level }}</span>
+                <span>{{ user_info.exp }} / {{ user_info.level * 100 }} 经验</span>
+            </div>
+            <div class="exp-track">
+                <div class="exp-fill" style="width: {{ (user_info.exp / (user_info.level * 100) * 100) | round(1) }}%;"></div>
+            </div>
+        </div>
+
+        <!-- 我的关注 / 粉丝（贴吧风格，点击进列表） -->
+        <div class="tieba-stats">
+            <a href="/friends?tab=following" class="tieba-stat">
+                <span class="tieba-stat-num">{{ my_following_count }}</span>
+                <span class="tieba-stat-label">关注</span>
+            </a>
+            <a href="/friends?tab=fans" class="tieba-stat">
+                <span class="tieba-stat-num">{{ my_fan_count }}</span>
+                <span class="tieba-stat-label">粉丝</span>
+            </a>
         </div>
 
         <!-- 兴趣标签 -->
@@ -36,7 +61,18 @@
         {% endif %}
 
         <div class="profile-actions">
+            {% if not user_info.student_verified %}
+            <a href="/verify" class="btn-secondary" style="color:#fa8c16;">🎓 去学生认证</a>
+            {% else %}
+            <a href="/verify" class="btn-secondary">🎓 认证信息</a>
+            {% endif %}
+            <a href="/messages" class="btn-secondary">💬 我的消息</a>
+            <button class="btn-secondary" id="online-toggle">
+                🟢 在线状态：{{ '开启' if user_info.show_online else '关闭' }}
+            </button>
             <a href="/profile/edit" class="btn-secondary">✏️ 编辑资料</a>
+            <a href="/friends" class="btn-secondary">👥 我的好友</a>
+            <a href="/blocklist" class="btn-secondary">🚫 黑名单</a>
             <a href="/change_password" class="btn-secondary">🔒 修改密码</a>
             <a href="/logout" class="btn-secondary btn-logout">退出登录</a>
         </div>
@@ -102,4 +138,17 @@
         {% endif %}
     </div>
 </div>
+
+<script>
+// 在线状态开关
+document.getElementById('online-toggle').onclick = function() {
+    fetch('/toggle_online', { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            if (data.code === 0) {
+                this.textContent = '🟢 在线状态：' + (data.show_online ? '开启' : '关闭');
+            }
+        });
+};
+</script>
 {% endblock %}
