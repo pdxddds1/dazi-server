@@ -201,6 +201,28 @@ def init_db():
         c.execute("ALTER TABLE lobby_messages ADD COLUMN reply_to_nickname TEXT")
     if 'reply_to_content' not in lobby_cols:
         c.execute("ALTER TABLE lobby_messages ADD COLUMN reply_to_content TEXT")
+    # ===== 好友申请表（A申请加B好友，B同意/拒绝）=====
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS friend_requests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            from_id INTEGER NOT NULL,
+            to_id INTEGER NOT NULL,
+            message TEXT,
+            status TEXT DEFAULT 'pending',
+            create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(from_id, to_id)
+        )
+    ''')
+    # ===== 好友备注表（我给好友起的备注名）=====
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS friend_notes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            friend_id INTEGER NOT NULL,
+            note TEXT,
+            UNIQUE(user_id, friend_id)
+        )
+    ''')
     conn.commit()
     conn.close()
     print("✅ 数据库初始化完成")
@@ -292,11 +314,15 @@ def update_last_active():
 def inject_global_vars():
     # 未读消息数
     chat_unread = 0
+    friend_req_unread = 0
     if 'user_id' in session:
         try:
             conn = get_conn()
             chat_unread = conn.execute(
                 'SELECT COUNT(*) AS n FROM messages WHERE to_user_id=? AND is_read=0',
+                (session['user_id'],)).fetchone()['n']
+            friend_req_unread = conn.execute(
+                "SELECT COUNT(*) AS n FROM friend_requests WHERE to_id=? AND status='pending'",
                 (session['user_id'],)).fetchone()['n']
             conn.close()
         except Exception:
@@ -306,6 +332,7 @@ def inject_global_vars():
         'nickname': session.get('nickname', ''),
         'avatar': session.get('avatar', ''),
         'chat_unread': chat_unread,
+        'friend_req_unread': friend_req_unread,
     }
 
 
@@ -482,6 +509,7 @@ def message_list():
     # 取每个聊天对象的最近一条消息
     rows = conn.execute('''
         SELECT u.id, u.nickname, u.avatar, u.student_verified, u.last_active, u.show_online,
+               fn.note AS my_note,
                (SELECT content FROM messages m2 WHERE
                   ((m2.from_user_id=u.id AND m2.to_user_id=?) OR (m2.from_user_id=? AND m2.to_user_id=u.id))
                   ORDER BY m2.id DESC LIMIT 1) AS last_msg,
@@ -491,10 +519,11 @@ def message_list():
                (SELECT COUNT(*) FROM messages m4 WHERE m4.from_user_id=u.id AND m4.to_user_id=? AND m4.is_read=0) AS unread
         FROM messages m
         JOIN users u ON u.id = CASE WHEN m.from_user_id=? THEN m.to_user_id ELSE m.from_user_id END
+        LEFT JOIN friend_notes fn ON fn.user_id=? AND fn.friend_id=u.id
         WHERE m.from_user_id=? OR m.to_user_id=?
         GROUP BY u.id
         ORDER BY MAX(m.id) DESC
-    ''', (uid, uid, uid, uid, uid, uid, uid, uid)).fetchall()
+    ''', (uid, uid, uid, uid, uid, uid, uid, uid, uid, uid, uid)).fetchall()
     conn.close()
     return render_template('messages.html', chats=rows, is_online_fn=is_online)
 
@@ -524,9 +553,24 @@ def chat_page(other_id):
         return redirect('/messages')
     # 打开聊天页，把对方发给我的消息标记已读
     conn.execute('UPDATE messages SET is_read=1 WHERE from_user_id=? AND to_user_id=?', (other_id, uid))
+    # 查备注名
+    note = conn.execute('SELECT note FROM friend_notes WHERE user_id=? AND friend_id=?',
+                        (uid, other_id)).fetchone()
+    my_note = note['note'] if note else ''
+    # 查是否互相关注（好友）
+    is_friend = conn.execute('''SELECT 1 FROM follows f1 JOIN follows f2
+                                ON f1.follower_id=f2.following_id AND f1.following_id=f2.follower_id
+                                WHERE f1.follower_id=? AND f1.following_id=?''',
+                             (uid, other_id)).fetchone() is not None
+    # 我是否已拉黑对方
+    i_blocked = conn.execute('SELECT 1 FROM blacklist WHERE user_id=? AND blocked_id=?',
+                             (uid, other_id)).fetchone() is not None
     conn.commit()
     conn.close()
-    return render_template('chat.html', other=other, is_online=is_online(other['last_active']) if other['show_online'] else False)
+    display_name = my_note or other['nickname']
+    return render_template('chat.html', other=other, display_name=display_name,
+                           my_note=my_note, is_friend=is_friend, i_blocked=i_blocked,
+                           is_online=is_online(other['last_active']) if other['show_online'] else False)
 
 
 # 发消息（JSON接口）
@@ -973,6 +1017,133 @@ def unblock_user(user_id):
     conn.close()
     flash('已取消拉黑')
     return redirect(url_for('user_home', user_id=user_id))
+
+
+# ==================== 好友申请 / 备注 ====================
+# 发送好友申请
+@app.route('/friend_request/send/<int:to_id>', methods=['POST'])
+def send_friend_request(to_id):
+    if 'user_id' not in session:
+        return jsonify({'code': 1, 'message': '请先登录'})
+    uid = session['user_id']
+    if uid == to_id:
+        return jsonify({'code': 1, 'message': '不能加自己为好友'})
+    message = request.form.get('message', '').strip()
+    conn = get_conn()
+    # 已经是好友了（互相关注）就不用申请
+    mutual = conn.execute('''SELECT 1 FROM follows f1 JOIN follows f2
+                             ON f1.follower_id=f2.following_id AND f1.following_id=f2.follower_id
+                             WHERE f1.follower_id=? AND f1.following_id=?''',
+                          (uid, to_id)).fetchone()
+    if mutual:
+        conn.close()
+        return jsonify({'code': 2, 'message': '你们已经是好友了'})
+    # 已经发过申请
+    existing = conn.execute('SELECT status FROM friend_requests WHERE from_id=? AND to_id=?',
+                            (uid, to_id)).fetchone()
+    if existing:
+        conn.close()
+        if existing['status'] == 'pending':
+            return jsonify({'code': 2, 'message': '申请已发送，等待对方同意'})
+        elif existing['status'] == 'accepted':
+            return jsonify({'code': 2, 'message': '你们已经是好友了'})
+        else:
+            # 被拒绝过，重新发
+            conn.execute("UPDATE friend_requests SET status='pending', message=? WHERE from_id=? AND to_id=?",
+                         (message, uid, to_id))
+    else:
+        conn.execute('INSERT INTO friend_requests (from_id, to_id, message) VALUES (?, ?, ?)',
+                     (uid, to_id, message))
+    # 给对方发通知
+    conn.execute('INSERT INTO notifications (user_id, from_user_id, type, content) VALUES (?, ?, ?, ?)',
+                 (to_id, uid, 'friend_request', f'{session["nickname"]} 请求加你为好友'))
+    conn.commit()
+    conn.close()
+    return jsonify({'code': 0, 'message': '好友申请已发送'})
+
+
+# 我的好友申请列表（收到的申请）
+@app.route('/friend_requests')
+def friend_requests():
+    if 'user_id' not in session:
+        return redirect('/login?next=/friend_requests')
+    conn = get_conn()
+    rows = conn.execute('''
+        SELECT fr.id, fr.message, fr.create_time, fr.from_id,
+               u.nickname, u.avatar, u.bio, u.level, u.student_verified
+        FROM friend_requests fr JOIN users u ON fr.from_id = u.id
+        WHERE fr.to_id=? AND fr.status='pending'
+        ORDER BY fr.create_time DESC
+    ''', (session['user_id'],)).fetchall()
+    conn.close()
+    return render_template('friend_requests.html', requests=rows)
+
+
+# 同意好友申请
+@app.route('/friend_request/<int:req_id>/accept', methods=['POST'])
+def accept_friend_request(req_id):
+    if 'user_id' not in session:
+        return jsonify({'code': 1, 'message': '请先登录'})
+    conn = get_conn()
+    req = conn.execute('SELECT from_id, to_id FROM friend_requests WHERE id=? AND to_id=?',
+                       (req_id, session['user_id'])).fetchone()
+    if not req:
+        conn.close()
+        return jsonify({'code': 1, 'message': '申请不存在'})
+    # 标记已同意
+    conn.execute("UPDATE friend_requests SET status='accepted' WHERE id=?", (req_id,))
+    # 双向关注=好友
+    conn.execute('INSERT OR IGNORE INTO follows (follower_id, following_id) VALUES (?, ?)',
+                 (req['to_id'], req['from_id']))
+    conn.execute('INSERT OR IGNORE INTO follows (follower_id, following_id) VALUES (?, ?)',
+                 (req['from_id'], req['to_id']))
+    # 通知对方
+    conn.execute('INSERT INTO notifications (user_id, from_user_id, type, content) VALUES (?, ?, ?, ?)',
+                 (req['from_id'], req['to_id'], 'friend_accept', f'{session["nickname"]} 同意了你的好友申请'))
+    conn.commit()
+    conn.close()
+    return jsonify({'code': 0, 'message': '已添加为好友'})
+
+
+# 拒绝好友申请
+@app.route('/friend_request/<int:req_id>/reject', methods=['POST'])
+def reject_friend_request(req_id):
+    if 'user_id' not in session:
+        return jsonify({'code': 1, 'message': '请先登录'})
+    conn = get_conn()
+    req = conn.execute('SELECT from_id FROM friend_requests WHERE id=? AND to_id=?',
+                       (req_id, session['user_id'])).fetchone()
+    if req:
+        conn.execute("UPDATE friend_requests SET status='rejected' WHERE id=?", (req_id,))
+        conn.commit()
+    conn.close()
+    return jsonify({'code': 0, 'message': '已拒绝'})
+
+
+# 设置/修改好友备注
+@app.route('/friend/note/<int:friend_id>', methods=['POST'])
+def set_friend_note(friend_id):
+    if 'user_id' not in session:
+        return jsonify({'code': 1, 'message': '请先登录'})
+    note = request.form.get('note', '').strip()
+    conn = get_conn()
+    conn.execute('''INSERT OR REPLACE INTO friend_notes (user_id, friend_id, note)
+                    VALUES (?, ?, ?)''', (session['user_id'], friend_id, note))
+    conn.commit()
+    conn.close()
+    return jsonify({'code': 0, 'note': note})
+
+
+# 未读好友申请数（顶部小红点）
+@app.route('/api/friend_request_count')
+def friend_request_count():
+    if 'user_id' not in session:
+        return jsonify({'count': 0})
+    conn = get_conn()
+    n = conn.execute("SELECT COUNT(*) AS n FROM friend_requests WHERE to_id=? AND status='pending'",
+                     (session['user_id'],)).fetchone()['n']
+    conn.close()
+    return jsonify({'count': n})
 
 
 # ===== 关注 / 取消关注（贴吧式单向关注，返回JSON给按钮用）=====

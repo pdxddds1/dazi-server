@@ -57,6 +57,13 @@
                 {{ '已关注' if is_following else '+ 关注TA' }}
             </button>
 
+            <!-- 加好友按钮 -->
+            {% if is_mutual %}
+            <a href="/chat/{{ user.id }}" class="btn-primary btn-sm" style="margin-top:8px;">💬 发消息</a>
+            {% else %}
+            <button class="btn-primary btn-sm" style="margin-top:8px;" onclick="sendFriendReq()">➕ 加好友</button>
+            {% endif %}
+
             {% if is_blocked %}
             <form method="POST" action="/user/{{ user.id }}/unblock">
                 <button type="submit" class="btn-secondary btn-logout">解除拉黑</button>
@@ -66,9 +73,6 @@
                   onsubmit="return confirm('确定拉黑该用户？首页将不再显示TA的帖子，TA也不能评论你的帖子');">
                 <button type="submit" class="btn-secondary btn-logout">拉黑</button>
             </form>
-            {% endif %}
-            {% if is_mutual %}
-            <a href="/chat/{{ user.id }}" class="btn-primary btn-sm">💬 发消息</a>
             {% endif %}
         {% elif not logged_in %}
             <!-- 未登录：引导登录关注 -->
@@ -104,9 +108,19 @@ function toggleFollow() {
             const btn = document.getElementById('user-follow-btn');
             btn.classList.toggle('followed', res.following);
             btn.textContent = res.following ? '已关注' : '+ 关注TA';
-            // 同步更新粉丝数字
             const fanNum = document.querySelector('.tieba-stat:nth-child(2) .tieba-stat-num');
             if (fanNum) fanNum.textContent = res.count;
+        });
+}
+function sendFriendReq() {
+    const msg = prompt('附言（可选）：') ?? '';
+    const fd = new FormData();
+    fd.append('message', msg);
+    fetch('/friend_request/send/{{ user.id }}', { method: 'POST', body: fd })
+        .then(r => r.json())
+        .then(res => {
+            alert(res.message);
+            if (res.code === 0) location.reload();
         });
 }
 </script>

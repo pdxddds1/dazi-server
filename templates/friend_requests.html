@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}好友申请{% endblock %}
+
+{% block content %}
+<div style="max-width:600px;margin:0 auto;padding:16px;">
+    <h2 style="margin-bottom:16px;">📩 好友申请</h2>
+    {% if requests %}
+        {% for r in requests %}
+        <div style="display:flex;align-items:center;gap:12px;background:#fff;padding:14px;border-radius:12px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.05);">
+            {% if r.avatar %}<img src="{{ r.avatar }}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;">
+            {% else %}<div style="width:48px;height:48px;border-radius:50%;background:#ddd;display:flex;align-items:center;justify-content:center;font-size:24px;">👤</div>{% endif %}
+            <div style="flex:1;min-width:0;">
+                <div style="font-weight:600;">{{ r.nickname }}
+                    {% if r.student_verified %}<span style="font-size:11px;background:#e8f5e9;color:#2e7d32;padding:2px 6px;border-radius:8px;">🎓 已认证</span>{% endif %}
+                    <span style="font-size:12px;color:#999;font-weight:normal;">Lv.{{ r.level }}</span>
+                </div>
+                {% if r.message %}<div style="font-size:13px;color:#666;margin-top:2px;">{{ r.message }}</div>{% endif %}
+                {% if r.bio %}<div style="font-size:12px;color:#999;margin-top:2px;">{{ r.bio }}</div>{% endif %}
+            </div>
+            <div style="display:flex;gap:8px;flex-shrink:0;">
+                <a href="/user/{{ r.from_id }}" style="padding:6px 12px;border:1px solid #ddd;border-radius:8px;text-decoration:none;color:#333;font-size:13px;">主页</a>
+                <button onclick="act({{ r.id }},'accept')" style="padding:6px 14px;border:none;border-radius:8px;background:#4a7cf7;color:#fff;cursor:pointer;font-size:13px;">同意</button>
+                <button onclick="act({{ r.id }},'reject')" style="padding:6px 14px;border:none;border-radius:8px;background:#f0f0f0;color:#666;cursor:pointer;font-size:13px;">拒绝</button>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div style="text-align:center;color:#999;padding:60px 0;">
+            <div style="font-size:48px;margin-bottom:12px;">📭</div>
+            暂无新的好友申请
+        </div>
+    {% endif %}
+</div>
+
+<script>
+function act(id, action) {
+    fetch(`/friend_request/${id}/${action}`, { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            if (data.code === 0) { location.reload(); }
+            else { alert(data.message); }
+        });
+}
+</script>
+{% endblock %}

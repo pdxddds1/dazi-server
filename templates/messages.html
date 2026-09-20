@@ -2,7 +2,13 @@
 {% block title %}消息 - 校园搭子{% endblock %}
 
 {% block content %}
-<h2 class="section-title">💬 我的消息</h2>
+<h2 class="section-title">
+    💬 我的消息
+    <a href="/friend_requests" style="float:right;font-size:14px;font-weight:normal;">
+        📩 好友申请
+        {% if friend_req_unread %}<span class="chat-badge">{{ friend_req_unread }}</span>{% endif %}
+    </a>
+</h2>
 
 {% if chats %}
 <div class="chat-list">
@@ -16,7 +22,8 @@
         </div>
         <div class="chat-info">
             <div class="chat-name-row">
-                <span class="chat-name">{{ c.nickname }}</span>
+                <span class="chat-name">{{ c.my_note or c.nickname }}</span>
+                {% if c.my_note %}<span style="font-size:12px;color:#999;">({{ c.nickname }})</span>{% endif %}
                 {% if c.student_verified %}<span class="verified-tag">🎓 已认证</span>{% endif %}
                 {% if c.last_time %}<span class="chat-time">{{ c.last_time[5:16] }}</span>{% endif %}
             </div>
