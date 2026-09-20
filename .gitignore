@@ -24,3 +24,9 @@ Thumbs.db
 *.zip
 .proxyai/
 test_iter2.py
+
+# Electron打包（太大，不传）
+desktop-app/
+
+# 用户上传的头像（个人数据，不传）
+static/uploads/

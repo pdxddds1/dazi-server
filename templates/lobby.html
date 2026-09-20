@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+{% block title %}聊天大厅 - Find Partner{% endblock %}
+
+{% block content %}
+<div class="lobby-page">
+    <div class="lobby-tabs">
+        <div class="lobby-tab active" id="tab-all" onclick="switchScope('all')">🌐 全网广场</div>
+        <div class="lobby-tab {{ '' if verified else 'disabled' }}" id="tab-school" onclick="switchScope('school')">
+            🏫 同校圈{% if not verified %}（需认证）{% endif %}
+        </div>
+    </div>
+
+    {% if my_school %}
+    <div class="lobby-school-tip">当前学校：{{ my_school }}</div>
+    {% endif %}
+
+    <div class="lobby-messages" id="lobby-messages"></div>
+
+    <!-- 回复引用条 -->
+    <div class="reply-preview" id="reply-preview" style="display:none;">
+        <span>回复 <b id="reply-name"></b>：<span id="reply-short"></span></span>
+        <button type="button" id="reply-cancel">×</button>
+    </div>
+
+    <!-- 输入区 -->
+    <div class="lobby-input-bar">
+        <button type="button" class="emoji-btn" id="emoji-btn" title="表情">😊</button>
+        <input type="text" id="lobby-input" placeholder="说点什么...（200字以内）" maxlength="200" autocomplete="off">
+        <button class="lobby-find-btn" id="lobby-find" title="发位置找搭子">📍 找搭子</button>
+        <button class="lobby-send-btn" id="lobby-send">发送</button>
+    </div>
+
+    <!-- 表情面板 -->
+    <div class="emoji-panel" id="emoji-panel" style="display:none;">
+        <span class="emoji-item">😀</span><span class="emoji-item">😂</span><span class="emoji-item">🤣</span>
+        <span class="emoji-item">😊</span><span class="emoji-item">😍</span><span class="emoji-item">😎</span>
+        <span class="emoji-item">🤔</span><span class="emoji-item">😅</span><span class="emoji-item">😭</span>
+        <span class="emoji-item">👍</span><span class="emoji-item">👎</span><span class="emoji-item">❤️</span>
+        <span class="emoji-item">🔥</span><span class="emoji-item">✨</span><span class="emoji-item">🎉</span>
+        <span class="emoji-item">🤝</span><span class="emoji-item">💪</span><span class="emoji-item">🙏</span>
+        <span class="emoji-item">🏀</span><span class="emoji-item">📚</span><span class="emoji-item">🎮</span>
+    </div>
+</div>
+
+<script>
+let currentScope = 'all';
+let lastId = 0;
+let myLat = null, myLng = null;
+let replyToId = null, replyToName = '';
+const box = document.getElementById('lobby-messages');
+
+if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+        pos => { myLat = pos.coords.latitude; myLng = pos.coords.longitude; },
+        () => {}, { timeout: 5000 }
+    );
+}
+
+function distanceKm(lat1, lng1, lat2, lng2) {
+    const R = 6371;
+    const dLat = (lat2-lat1)*Math.PI/180, dLng = (lng2-lng1)*Math.PI/180;
+    const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+    return R*2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+function fmtDist(km) { return km<1 ? Math.round(km*1000)+'m' : km.toFixed(1)+'km'; }
+function esc(s) { const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
+
+function addMsg(m) {
+    const div = document.createElement('div');
+    div.className = 'lobby-msg ' + (m.mine ? 'mine' : 'theirs');
+
+    const avatarHtml = `<a href="/user/${m.user_id}" class="lobby-avatar-link">` +
+        (m.avatar ? `<img src="${m.avatar}" class="lobby-avatar">` : `<div class="lobby-avatar">👤</div>`) + `</a>`;
+
+    const badgeHtml = `<span class="level-badge mini">Lv.${m.level}</span>`;
+    const verifiedHtml = m.verified ? `<span class="verified-tag">🎓</span>` : '';
+    const schoolHtml = m.school ? `<span class="lobby-school">${esc(m.school)}</span>` : '';
+
+    let distHtml = '';
+    if (m.msg_type === 'find' && m.lat && m.lng && myLat && myLng) {
+        distHtml = `<span class="lobby-dist">📍 ${fmtDist(distanceKm(myLat,myLng,m.lat,m.lng))}</span>`;
+    }
+
+    const bubbleCls = m.msg_type === 'find' ? 'lobby-bubble find-bubble' : 'lobby-bubble';
+    const findPrefix = m.msg_type === 'find' ? '🆘 找搭子：' : '';
+
+    // 回复引用
+    let quoteHtml = '';
+    if (m.reply_to_nickname) {
+        quoteHtml = `<div class="quote-box"><span class="quote-name">${esc(m.reply_to_nickname)}：</span>${esc((m.reply_to_content||'').slice(0,30))}</div>`;
+    }
+
+    // 回复按钮（别人的消息才显示）
+    let replyBtnHtml = '';
+    if (!m.mine) {
+        replyBtnHtml = `<button class="mini-reply-btn" data-id="${m.id}" data-name="${esc(m.nickname)}">回复</button>`;
+    }
+
+    if (m.mine) {
+        div.innerHTML = `
+            <div class="lobby-bubble-wrap mine">
+                <div class="${bubbleCls}">${quoteHtml}${findPrefix}${esc(m.content)}</div>
+                <div class="lobby-meta">${m.time} ${badgeHtml} ${distHtml}</div>
+            </div>
+            ${avatarHtml}`;
+    } else {
+        div.innerHTML = `
+            ${avatarHtml}
+            <div class="lobby-bubble-wrap">
+                <div class="lobby-meta">
+                    <a href="/user/${m.user_id}" class="lobby-name-link">${esc(m.nickname)}</a>
+                    ${badgeHtml} ${verifiedHtml} ${schoolHtml} ${distHtml}
+                    <span class="lobby-time">${m.time}</span>
+                    ${replyBtnHtml}
+                </div>
+                <div class="${bubbleCls}">${quoteHtml}${findPrefix}${esc(m.content)}</div>
+            </div>`;
+    }
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+    if (m.id > lastId) lastId = m.id;
+}
+
+// 回复按钮事件（事件委托，轮询新加的消息也能点）
+box.addEventListener('click', function(e) {
+    const btn = e.target.closest('.mini-reply-btn');
+    if (btn) {
+        replyToId = btn.dataset.id;
+        replyToName = btn.dataset.name;
+        document.getElementById('reply-preview').style.display = 'flex';
+        document.getElementById('reply-name').textContent = replyToName;
+        document.getElementById('reply-short').textContent = btn.closest('.lobby-bubble-wrap').querySelector('.lobby-bubble').textContent.slice(0,20);
+        document.getElementById('lobby-input').focus();
+    }
+});
+document.getElementById('reply-cancel').onclick = function() {
+    replyToId = null; replyToName = '';
+    document.getElementById('reply-preview').style.display = 'none';
+};
+
+// 表情面板
+const emojiPanel = document.getElementById('emoji-panel');
+document.getElementById('emoji-btn').onclick = function(e) {
+    e.stopPropagation();
+    emojiPanel.style.display = emojiPanel.style.display === 'block' ? 'none' : 'block';
+};
+document.addEventListener('click', function(e) {
+    if (!emojiPanel.contains(e.target) && e.target.id !== 'emoji-btn') {
+        emojiPanel.style.display = 'none';
+    }
+});
+emojiPanel.querySelectorAll('.emoji-item').forEach(el => {
+    el.onclick = function() {
+        const input = document.getElementById('lobby-input');
+        input.value += this.textContent;
+        input.focus();
+        emojiPanel.style.display = 'none';
+    };
+});
+
+function loadHistory() {
+    fetch(`/lobby/history?scope=${currentScope}&after_id=${lastId}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.code === 0) {
+                if (data.messages.length === 0 && lastId === 0 && box.children.length === 0) {
+                    box.innerHTML = '<div class="lobby-empty">还没人说话，来抢沙发！</div>';
+                }
+                data.messages.forEach(addMsg);
+            } else if (data.code === 2) {
+                box.innerHTML = `<div class="lobby-empty">${data.message}</div>`;
+            }
+        });
+}
+
+function sendText() {
+    const input = document.getElementById('lobby-input');
+    const text = input.value.trim();
+    if (!text) return;
+    const fd = new FormData();
+    fd.append('content', text);
+    fd.append('msg_type', 'text');
+    if (replyToId) fd.append('reply_id', replyToId);
+    fetch('/lobby/send', { method: 'POST', body: fd })
+        .then(r => r.json())
+        .then(data => {
+            if (data.code === 0) {
+                input.value = '';
+                replyToId = null;
+                document.getElementById('reply-preview').style.display = 'none';
+                loadHistory();
+            } else alert(data.message);
+        });
+}
+
+document.getElementById('lobby-find').onclick = function() {
+    const input = document.getElementById('lobby-input');
+    const text = input.value.trim();
+    if (!text) { alert('先在输入框写一句你想找什么搭子'); input.focus(); return; }
+    if (!navigator.geolocation) { alert('浏览器不支持定位'); return; }
+    this.textContent = '定位中...';
+    navigator.geolocation.getCurrentPosition(pos => {
+        myLat = pos.coords.latitude; myLng = pos.coords.longitude;
+        const fd = new FormData();
+        fd.append('content', text);
+        fd.append('msg_type', 'find');
+        fd.append('lat', myLat);
+        fd.append('lng', myLng);
+        if (replyToId) fd.append('reply_id', replyToId);
+        fetch('/lobby/send', { method: 'POST', body: fd })
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('lobby-find').textContent = '📍 找搭子';
+                if (data.code === 0) {
+                    input.value = '';
+                    replyToId = null;
+                    document.getElementById('reply-preview').style.display = 'none';
+                    loadHistory();
+                } else alert(data.message);
+            });
+    }, err => {
+        document.getElementById('lobby-find').textContent = '📍 找搭子';
+        alert('定位失败：' + err.message);
+    }, { enableHighAccuracy: true, timeout: 10000 });
+};
+
+document.getElementById('lobby-send').onclick = sendText;
+document.getElementById('lobby-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') sendText();
+});
+
+function switchScope(scope) {
+    currentScope = scope;
+    lastId = 0;
+    box.innerHTML = '';
+    document.getElementById('tab-all').classList.toggle('active', scope === 'all');
+    document.getElementById('tab-school').classList.toggle('active', scope === 'school');
+    loadHistory();
+}
+
+loadHistory();
+setInterval(loadHistory, 2000);
+</script>
+{% endblock %}
