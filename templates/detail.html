@@ -56,6 +56,12 @@
                   onsubmit="return confirm('确定要删除这条帖子吗？');">
                 <button type="submit" class="action-btn danger">🗑️ 删除</button>
             </form>
+            {% elif session.user_id == 2 %}
+            {# 管理员：可以删任何人的帖子 #}
+            <form method="POST" action="/post/{{ post.id }}/delete" style="display:inline;"
+                  onsubmit="return confirm('管理员：确定删除这条帖子吗？');">
+                <button type="submit" class="action-btn danger">🗑️ 删除(管理)</button>
+            </form>
             {% elif logged_in %}
             <form method="POST" action="/post/{{ post.id }}/report" class="report-form"
                   onsubmit="return confirm('确认举报这条帖子？');">

@@ -12,6 +12,11 @@
         <h2 class="profile-name">{{ user.nickname }}
             {% if user.student_verified %}<span class="verified-tag">🎓 已学生认证</span>{% endif %}
         </h2>
+        {% if user.student_verified and user.school %}
+            {% if is_self or user.show_school %}
+            <div class="profile-school">🏫 {{ user.school }}</div>
+            {% endif %}
+        {% endif %}
 
         <div class="profile-detail">
             {% if online_now %}<span class="online-text">🟢 在线</span>{% else %}<span class="offline-text">⚪ 离线</span>{% endif %}

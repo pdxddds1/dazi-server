@@ -18,12 +18,14 @@ a {
     color: inherit;
 }
 
-/* ===== 导航栏（贴吧蓝风格）===== */`n.navbar {`n    background: linear-gradient(135deg, #4e6ef2 0%, #3b5bdb 100%);
+/* ===== 导航栏（贴吧蓝风格）===== */
+.navbar {
+    background: linear-gradient(135deg, #4e6ef2 0%, #3b5bdb 100%);
     color: white;
     position: sticky;
     top: 0;
     z-index: 100;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 12px rgba(78,110,242,0.25);
 }
 
 .nav-container {
@@ -1218,4 +1220,384 @@ a {
 .chat-send-btn {
     padding: 0 20px; border: none; border-radius: 20px;
     background: #4e6ef2; color: white; cursor: pointer; font-size: 15px;
+}
+
+/* ============================================================
+   v2 高级感升级层（2026-09-19）
+   设计目标：更柔和的背景、更精致的卡片、更统一的间距
+   ============================================================ */
+:root {
+    --brand: #4e6ef2;
+    --brand-deep: #3b5bdb;
+    --bg: #f4f6fb;
+    --card: #ffffff;
+    --text: #1f2329;
+    --text-sub: #8a90a6;
+    --line: #eef0f5;
+    --radius: 16px;
+    --shadow: 0 2px 12px rgba(31,35,41,0.06);
+    --shadow-hover: 0 6px 20px rgba(31,35,41,0.10);
+}
+
+body {
+    background-color: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    letter-spacing: 0.2px;
+}
+
+/* 导航栏更通透 */
+.navbar {
+    background: linear-gradient(135deg, #4e6ef2 0%, #5b7cfa 100%);
+    box-shadow: 0 4px 20px rgba(78,110,242,0.28);
+}
+.nav-container { padding: 14px 18px; }
+.nav-logo { font-size: 19px; letter-spacing: 0.5px; }
+.nav-btn {
+    background: rgba(255,255,255,0.18);
+    backdrop-filter: blur(10px);
+    padding: 7px 16px;
+    border-radius: 22px;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all .2s ease;
+}
+.nav-btn:hover { background: rgba(255,255,255,0.32); transform: translateY(-1px); }
+
+/* 主内容区 */
+.main-content { padding: 20px 16px; }
+
+/* 通用卡片升级 */
+.post-card, .my-post-card, .detail-card, .tieba-user-card,
+.chat-item, .auth-card, .profile-card, .publish-container {
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    border: 1px solid rgba(255,255,255,0.8);
+    transition: box-shadow .25s ease, transform .25s ease;
+}
+.post-card:hover, .chat-item:hover {
+    box-shadow: var(--shadow-hover);
+    transform: translateY(-2px);
+}
+
+/* 帖子标题更有层次 */
+.post-title { font-size: 16.5px; font-weight: 600; letter-spacing: 0.3px; }
+.post-author { color: var(--text-sub); font-size: 12.5px; }
+
+/* 分类标签 */
+.category-tag {
+    padding: 7px 18px;
+    border-radius: 22px;
+    background: white;
+    border: 1px solid var(--line);
+    font-size: 13.5px;
+    transition: all .2s;
+}
+.category-tag.active {
+    background: var(--brand);
+    color: white;
+    border-color: var(--brand);
+    box-shadow: 0 4px 12px rgba(78,110,242,0.3);
+}
+
+/* 主按钮 */
+.btn-primary {
+    background: linear-gradient(135deg, #4e6ef2 0%, #6a5bf5 100%);
+    border-radius: 12px;
+    padding: 13px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    box-shadow: 0 6px 16px rgba(78,110,242,0.3);
+    transition: all .2s;
+}
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 22px rgba(78,110,242,0.4); }
+
+/* 次按钮 */
+.btn-secondary {
+    border-radius: 12px;
+    padding: 10px 20px;
+    font-weight: 500;
+    transition: all .2s;
+}
+.btn-secondary:hover { background: #f0f3ff; }
+
+/* 返回按钮 */
+.back-btn {
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    font-weight: 500;
+}
+
+/* section 标题 */
+.section-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text);
+    margin: 20px 0 14px;
+    padding-left: 10px;
+    border-left: 4px solid var(--brand);
+    letter-spacing: 0.5px;
+}
+
+/* 个人中心卡片 */
+.profile-card {
+    padding: 36px 20px;
+    background: linear-gradient(180deg, #ffffff 0%, #fafbff 100%);
+}
+.profile-name { font-size: 22px; letter-spacing: 0.5px; }
+
+/* 标签 */
+.tag-badge {
+    background: #eef2ff;
+    color: var(--brand);
+    padding: 5px 14px;
+    border-radius: 16px;
+    font-size: 12.5px;
+    font-weight: 500;
+}
+
+/* 输入框 */
+.form-group input, .form-group select, .form-group textarea {
+    border-radius: 12px;
+    border: 1.5px solid var(--line);
+    padding: 12px 14px;
+    transition: border-color .2s, box-shadow .2s;
+}
+.form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+    border-color: var(--brand);
+    box-shadow: 0 0 0 4px rgba(78,110,242,0.1);
+}
+
+/* 关注按钮 */
+.tieba-follow-btn {
+    border-radius: 22px;
+    padding: 8px 24px;
+    font-weight: 600;
+    transition: all .2s;
+}
+
+/* 等级徽章 */
+.level-badge {
+    background: linear-gradient(135deg, #ff9a44, #fc6076);
+    box-shadow: 0 2px 8px rgba(252,96,118,0.35);
+}
+
+/* 聊天页 */
+.chat-messages { background: #eef1f7; border-radius: var(--radius); }
+.bubble { border-radius: 18px; padding: 11px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.mine .bubble { background: linear-gradient(135deg, #4e6ef2, #6a5bf5); }
+
+/* flash 提示 */
+.flash-msg {
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(76,175,80,0.15);
+    font-weight: 500;
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-thumb { background: #c8cdd9; border-radius: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* 页面进入动画 */
+.post-card, .chat-item, .tieba-user-card {
+    animation: fadeUp .3s ease;
+}
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== 公共聊天大厅 ===== */
+.lobby-page { display: flex; flex-direction: column; height: calc(100vh - 180px); }
+
+.lobby-tabs {
+    display: flex; background: white; border-radius: 14px;
+    padding: 4px; margin-bottom: 8px; box-shadow: var(--shadow);
+}
+.lobby-tab {
+    flex: 1; text-align: center; padding: 10px;
+    border-radius: 11px; font-size: 14px; font-weight: 500;
+    color: #888; cursor: pointer; transition: all .2s;
+}
+.lobby-tab.active {
+    background: linear-gradient(135deg, #4e6ef2, #6a5bf5);
+    color: white; box-shadow: 0 3px 10px rgba(78,110,242,0.3);
+}
+.lobby-tab.disabled { color: #ccc; cursor: not-allowed; }
+
+.lobby-school-tip {
+    font-size: 12px; color: #888; text-align: center;
+    margin-bottom: 8px;
+}
+
+.lobby-messages {
+    flex: 1; overflow-y: auto; padding: 16px;
+    background: #eef1f7; border-radius: 14px; margin-bottom: 8px;
+}
+.lobby-empty {
+    text-align: center; color: #999; padding: 40px 20px; font-size: 14px;
+}
+
+.lobby-msg { display: flex; gap: 10px; margin-bottom: 14px; align-items: flex-start; }
+.lobby-msg.mine { flex-direction: row-reverse; }
+.lobby-avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: #dde3f0; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 18px;
+}
+.lobby-bubble-wrap { max-width: 72%; }
+.lobby-msg.mine .lobby-bubble-wrap { display: flex; flex-direction: column; align-items: flex-end; }
+.lobby-meta { font-size: 12px; color: #999; margin-bottom: 3px; }
+.lobby-name { color: #4e6ef2; font-weight: 600; margin-right: 4px; }
+.lobby-school { color: #1890ff; background: #e6f7ff; padding: 0 6px; border-radius: 8px; margin: 0 3px; }
+.lobby-time { margin-left: 6px; }
+.lobby-bubble {
+    background: white; padding: 10px 14px; border-radius: 14px;
+    font-size: 14.5px; line-height: 1.5; word-break: break-word;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    border-top-left-radius: 4px;
+}
+.lobby-msg.mine .lobby-bubble {
+    background: linear-gradient(135deg, #4e6ef2, #6a5bf5);
+    color: white; border-radius: 14px; border-top-right-radius: 4px;
+}
+
+.lobby-input-bar {
+    display: flex; gap: 8px; padding: 8px;
+    background: white; border-radius: 14px; box-shadow: var(--shadow);
+}
+.lobby-input-bar input {
+    flex: 1; padding: 11px 16px; border: 1.5px solid #eef0f5;
+    border-radius: 22px; outline: none; font-size: 15px;
+}
+.lobby-input-bar input:focus { border-color: #4e6ef2; }
+.lobby-send-btn {
+    padding: 0 24px; border: none; border-radius: 22px;
+    background: linear-gradient(135deg, #4e6ef2, #6a5bf5);
+    color: white; font-size: 15px; font-weight: 500; cursor: pointer;
+}
+
+/* ===== 首页欢迎横幅 ===== */
+.hero-banner {
+    background: linear-gradient(135deg, #4e6ef2 0%, #7b5bf5 60%, #a855f7 100%);
+    border-radius: 18px;
+    padding: 24px 22px;
+    color: white;
+    margin-bottom: 16px;
+    box-shadow: 0 8px 24px rgba(107,91,245,0.3);
+    position: relative;
+    overflow: hidden;
+}
+.hero-banner::after {
+    content: '';
+    position: absolute;
+    right: -30px; top: -30px;
+    width: 140px; height: 140px;
+    background: rgba(255,255,255,0.12);
+    border-radius: 50%;
+}
+.hero-title { font-size: 22px; font-weight: 700; margin-bottom: 6px; letter-spacing: 0.5px; }
+.hero-sub { font-size: 14px; opacity: 0.9; }
+.hero-actions { margin-top: 16px; display: flex; gap: 10px; }
+.hero-btn {
+    padding: 9px 22px; border-radius: 22px;
+    background: white; color: #4e6ef2;
+    font-weight: 600; font-size: 14px;
+    transition: transform .2s;
+}
+.hero-btn:hover { transform: translateY(-2px); }
+.hero-btn.ghost {
+    background: rgba(255,255,255,0.2); color: white;
+    border: 1px solid rgba(255,255,255,0.5);
+}
+
+/* 快捷入口 */
+.quick-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+}
+.quick-card {
+    background: white;
+    border-radius: 14px;
+    padding: 16px 8px;
+    text-align: center;
+    box-shadow: var(--shadow);
+    transition: all .2s;
+}
+.quick-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); }
+.quick-icon { font-size: 26px; margin-bottom: 6px; }
+.quick-name { font-size: 12.5px; color: #555; font-weight: 500; }
+
+/* ===== 大厅：找搭子消息 + 距离 ===== */
+.find-bubble {
+    background: linear-gradient(135deg, #fff3e0, #ffe0b2) !important;
+    border: 1.5px dashed #ff9800;
+    color: #e65100 !important;
+    font-weight: 500;
+}
+.mine .find-bubble {
+    background: linear-gradient(135deg, #ff9800, #ff5722) !important;
+    color: white !important;
+    border: none;
+}
+.lobby-dist {
+    display: inline-block;
+    background: #fff3e0;
+    color: #e65100;
+    font-size: 11px;
+    padding: 1px 8px;
+    border-radius: 8px;
+    margin: 0 4px;
+}
+.mine .lobby-dist { background: rgba(255,255,255,0.25); color: white; }
+.lobby-find-btn {
+    padding: 0 14px; border: 1.5px solid #ff9800;
+    background: #fff8f0; color: #ff9800;
+    border-radius: 22px; font-size: 13px; font-weight: 600; cursor: pointer;
+    white-space: nowrap;
+}
+.lobby-find-btn:hover { background: #ff9800; color: white; }
+
+/* ===== 大厅升级：回复+表情+跳转 ===== */
+.lobby-avatar-link { text-decoration: none; display:inline-block; }
+.lobby-name-link { color:#667eea; text-decoration:none; font-weight:600; }
+.lobby-name-link:hover { text-decoration:underline; }
+.mini-reply-btn {
+    font-size:11px; padding:1px 8px; margin-left:6px;
+    background:#eef0ff; color:#667eea; border:none; border-radius:8px; cursor:pointer;
+}
+.mini-reply-btn:hover { background:#667eea; color:white; }
+.quote-box {
+    background:rgba(0,0,0,0.05); border-left:3px solid #667eea;
+    padding:3px 8px; border-radius:4px; font-size:12px; color:#666; margin-bottom:4px;
+}
+.quote-name { color:#667eea; font-weight:500; }
+.reply-preview {
+    display:flex; align-items:center; justify-content:space-between;
+    background:#eef0ff; padding:6px 12px; font-size:13px;
+    border-radius:10px 10px 0 0; color:#555;
+}
+.reply-preview button {
+    background:none; border:none; font-size:16px; cursor:pointer; color:#999;
+}
+.emoji-btn {
+    font-size:20px; border:none; background:none; cursor:pointer; padding:0 6px;
+}
+.emoji-panel {
+    position:fixed; bottom:80px; left:16px; background:#fff;
+    border-radius:12px; padding:10px; box-shadow:0 4px 20px rgba(0,0,0,0.15);
+    display:grid; grid-template-columns:repeat(7,1fr); gap:4px; z-index:999;
+    max-width:280px;
+}
+.emoji-item { font-size:22px; cursor:pointer; text-align:center; padding:4px; border-radius:6px; }
+.emoji-item:hover { background:#f0f0f0; }
+.profile-school {
+    display:inline-block; margin-top:8px; padding:4px 14px;
+    background:linear-gradient(135deg,#e0e7ff,#fce7f3);
+    color:#4338ca; border-radius:20px; font-size:14px; font-weight:500;
 }

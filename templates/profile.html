@@ -70,6 +70,9 @@
             <button class="btn-secondary" id="online-toggle">
                 🟢 在线状态：{{ '开启' if user_info.show_online else '关闭' }}
             </button>
+            <button class="btn-secondary" id="school-toggle">
+                🏫 学校显示：{{ '开启' if user_info.show_school else '关闭' }}
+            </button>
             <a href="/profile/edit" class="btn-secondary">✏️ 编辑资料</a>
             <a href="/friends" class="btn-secondary">👥 我的好友</a>
             <a href="/blocklist" class="btn-secondary">🚫 黑名单</a>
@@ -147,6 +150,16 @@ document.getElementById('online-toggle').onclick = function() {
         .then(data => {
             if (data.code === 0) {
                 this.textContent = '🟢 在线状态：' + (data.show_online ? '开启' : '关闭');
+            }
+        });
+};
+// 学校显示开关
+document.getElementById('school-toggle').onclick = function() {
+    fetch('/toggle_school', { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            if (data.code === 0) {
+                this.textContent = '🏫 学校显示：' + (data.show_school ? '开启' : '关闭');
             }
         });
 };

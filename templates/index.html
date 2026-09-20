@@ -1,7 +1,45 @@
 {% extends "base.html" %}
-{% block title %}校园搭子 - 首页{% endblock %}
+{% block title %}Find Partner - 首页{% endblock %}
 
 {% block content %}
+<!-- 欢迎横幅 -->
+<div class="hero-banner">
+    <div class="hero-text">
+        <h1 class="hero-title">{% if logged_in %}你好，{{ nickname }} 👋{% else %}欢迎来到 Find Partner{% endif %}</h1>
+        <p class="hero-sub">在这里找到志同道合的校园伙伴</p>
+    </div>
+    {% if logged_in %}
+    <div class="hero-actions">
+        <a href="/publish" class="hero-btn">＋ 发帖</a>
+        <a href="/lobby" class="hero-btn ghost">🏛️ 大厅</a>
+    </div>
+    {% else %}
+    <div class="hero-actions">
+        <a href="/login" class="hero-btn">登录 / 注册</a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- 快捷入口 -->
+<div class="quick-grid">
+    <a href="/lobby" class="quick-card">
+        <div class="quick-icon">🏛️</div>
+        <div class="quick-name">聊天大厅</div>
+    </a>
+    <a href="/users" class="quick-card">
+        <div class="quick-icon">🔍</div>
+        <div class="quick-name">找搭子</div>
+    </a>
+    <a href="/friends" class="quick-card">
+        <div class="quick-icon">👥</div>
+        <div class="quick-name">我的好友</div>
+    </a>
+    <a href="/verify" class="quick-card">
+        <div class="quick-icon">🎓</div>
+        <div class="quick-name">学生认证</div>
+    </a>
+</div>
+
 <!-- 搜索栏 -->
 <form class="search-bar" method="GET" action="/">
     <input type="text" name="q" value="{{ q }}" placeholder="搜索帖子标题或内容，如：篮球">
@@ -31,6 +69,7 @@
             <div class="post-author">
                 {% if post.avatar %}<img src="{{ post.avatar }}" class="mini-avatar" alt="头像">{% else %}👤{% endif %}
                 {{ post.nickname }}
+                {% if post.student_verified %}<span class="verified-tag">🎓</span>{% endif %}
                 {% if post.age %}<span class="author-age">{{ post.age }}岁</span>{% endif %}
                 <span class="post-like">❤ {{ post.like_count }}</span>
             </div>

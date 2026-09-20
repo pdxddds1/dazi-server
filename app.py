@@ -64,6 +64,7 @@ def init_db():
         ('real_name',     'ALTER TABLE users ADD COLUMN real_name TEXT'),              # 真实姓名（不公开）
         ('last_active',   'ALTER TABLE users ADD COLUMN last_active DATETIME'),  # 最后活跃（NULL=从未活跃）
         ('show_online',   'ALTER TABLE users ADD COLUMN show_online INTEGER DEFAULT 1'),# 是否显示在线状态
+        ('show_school',  'ALTER TABLE users ADD COLUMN show_school INTEGER DEFAULT 1'),# 是否公开学校
     ]:
         if col not in columns:
             c.execute(sql)
@@ -175,6 +176,31 @@ def init_db():
             create_time DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+    # 公共聊天大厅消息表（所有人都能看）
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS lobby_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            school TEXT,
+            content TEXT NOT NULL,
+            create_time DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    # 给老表补字段（msg_type/位置）
+    c.execute("PRAGMA table_info(lobby_messages)")
+    lobby_cols = [row[1] for row in c.fetchall()]
+    if 'msg_type' not in lobby_cols:
+        c.execute('ALTER TABLE lobby_messages ADD COLUMN msg_type TEXT DEFAULT "text"')
+    if 'location_lat' not in lobby_cols:
+        c.execute('ALTER TABLE lobby_messages ADD COLUMN location_lat REAL')
+    if 'location_lng' not in lobby_cols:
+        c.execute('ALTER TABLE lobby_messages ADD COLUMN location_lng REAL')
+    if 'reply_to_id' not in lobby_cols:
+        c.execute("ALTER TABLE lobby_messages ADD COLUMN reply_to_id INTEGER")
+    if 'reply_to_nickname' not in lobby_cols:
+        c.execute("ALTER TABLE lobby_messages ADD COLUMN reply_to_nickname TEXT")
+    if 'reply_to_content' not in lobby_cols:
+        c.execute("ALTER TABLE lobby_messages ADD COLUMN reply_to_content TEXT")
     conn.commit()
     conn.close()
     print("✅ 数据库初始化完成")
@@ -296,7 +322,7 @@ def index():
 
     sql = '''
         SELECT p.id, p.title, p.category, p.create_time,
-               u.nickname, u.age, u.credit, u.avatar,
+               u.nickname, u.age, u.credit, u.avatar, u.student_verified,
                (SELECT COUNT(*) FROM likes l WHERE l.post_id = p.id) AS like_count
         FROM posts p JOIN users u ON p.user_id = u.id
         WHERE p.status = 1
@@ -378,6 +404,9 @@ def login():
             else:
                 return render_template('login.html', error='手机号或密码错误', action='login', next=next_page)
 
+    # 已登录再访问登录页，直接跳首页（避免返回键卡在登录页）
+    if 'user_id' in session:
+        return redirect(next_page or url_for('index'))
     return render_template('login.html', error='', action='login', next=next_page)
 
 
@@ -412,6 +441,20 @@ def verify():
         return redirect('/profile')
     conn.close()
     return render_template('verify.html', me=me, error='')
+
+
+# 切换"显示学校"开关
+@app.route('/toggle_school', methods=['POST'])
+def toggle_school():
+    if 'user_id' not in session:
+        return jsonify({'code': 1, 'message': '请先登录'})
+    conn = get_conn()
+    me = conn.execute('SELECT show_school FROM users WHERE id=?', (session['user_id'],)).fetchone()
+    new_val = 0 if me['show_school'] else 1
+    conn.execute('UPDATE users SET show_school=? WHERE id=?', (new_val, session['user_id']))
+    conn.commit()
+    conn.close()
+    return jsonify({'code': 0, 'show_school': new_val})
 
 
 # 切换"显示在线状态"开关
@@ -524,6 +567,112 @@ def chat_send():
     msg_id = cur.lastrowid
     conn.close()
     return jsonify({'code': 0, 'id': msg_id})
+
+
+# ==================== 公共聊天大厅 ====================
+# 大厅页面
+@app.route('/lobby')
+def lobby():
+    if 'user_id' not in session:
+        return redirect('/login?next=/lobby')
+    conn = get_conn()
+    me = conn.execute('SELECT school, student_verified FROM users WHERE id=?',
+                      (session['user_id'],)).fetchone()
+    conn.close()
+    return render_template('lobby.html', my_school=me['school'] or '',
+                           verified=me['student_verified'])
+
+
+# 大厅发消息
+@app.route('/lobby/send', methods=['POST'])
+def lobby_send():
+    if 'user_id' not in session:
+        return jsonify({'code': 1, 'message': '请先登录'})
+    content = request.form.get('content', '').strip()
+    msg_type = request.form.get('msg_type', 'text')
+    if not content:
+        return jsonify({'code': 1, 'message': '消息不能为空'})
+    if len(content) > 200:
+        return jsonify({'code': 1, 'message': '消息不能超过200字'})
+    lat = request.form.get('lat', type=float)
+    lng = request.form.get('lng', type=float)
+    reply_id = request.form.get('reply_id', type=int)
+    reply_nickname = None
+    reply_content = None
+    conn = get_conn()
+    me = conn.execute('SELECT school FROM users WHERE id=?', (session['user_id'],)).fetchone()
+    # 如果是回复，查被回复消息的昵称和内容快照
+    if reply_id:
+        src = conn.execute('''SELECT l.content, u.nickname FROM lobby_messages l
+                              JOIN users u ON u.id=l.user_id WHERE l.id=?''', (reply_id,)).fetchone()
+        if src:
+            reply_nickname = src['nickname']
+            reply_content = src['content']
+    conn.execute('''INSERT INTO lobby_messages (user_id, school, content, msg_type,
+                    location_lat, location_lng, reply_to_id, reply_to_nickname, reply_to_content)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                 (session['user_id'], me['school'], content, msg_type, lat, lng,
+                  reply_id, reply_nickname, reply_content))
+    conn.commit()
+    conn.close()
+    return jsonify({'code': 0})
+
+
+# 大厅历史消息（scope=all 全部 / scope=school 本校）
+@app.route('/lobby/history')
+def lobby_history():
+    if 'user_id' not in session:
+        return jsonify({'code': 1, 'message': '请先登录'})
+    scope = request.args.get('scope', 'all')
+    after_id = request.args.get('after_id', 0, type=int)
+    uid = session['user_id']
+    conn = get_conn()
+    if scope == 'school':
+        me = conn.execute('SELECT school FROM users WHERE id=?', (uid,)).fetchone()
+        if not me['school']:
+            conn.close()
+            return jsonify({'code': 2, 'message': '请先完成学生认证，才能看本校频道'})
+        rows = conn.execute('''
+            SELECT l.id, l.user_id, l.content, l.create_time, l.school,
+                   l.msg_type, l.location_lat, l.location_lng,
+                   l.reply_to_id, l.reply_to_nickname, l.reply_to_content,
+                   u.nickname, u.avatar, u.level, u.student_verified, u.show_school
+            FROM lobby_messages l JOIN users u ON u.id = l.user_id
+            WHERE l.school = ? AND l.id > ?
+            ORDER BY l.id ASC LIMIT 200
+        ''', (me['school'], after_id)).fetchall()
+    else:
+        rows = conn.execute('''
+            SELECT l.id, l.user_id, l.content, l.create_time, l.school,
+                   l.msg_type, l.location_lat, l.location_lng,
+                   l.reply_to_id, l.reply_to_nickname, l.reply_to_content,
+                   u.nickname, u.avatar, u.level, u.student_verified, u.show_school
+            FROM lobby_messages l JOIN users u ON u.id = l.user_id
+            WHERE l.id > ?
+            ORDER BY l.id ASC LIMIT 200
+        ''', (after_id,)).fetchall()
+    conn.close()
+    msgs = []
+    for r in rows:
+        msgs.append({
+            'id': r['id'],
+            'user_id': r['user_id'],
+            'mine': r['user_id'] == uid,
+            'nickname': r['nickname'],
+            'avatar': r['avatar'] or '',
+            'level': r['level'],
+            'verified': bool(r['student_verified']),
+            'school': (r['school'] or '') if r['show_school'] else '',
+            'content': r['content'],
+            'msg_type': r['msg_type'] if 'msg_type' in r.keys() else 'text',
+            'lat': r['location_lat'] if 'location_lat' in r.keys() else None,
+            'lng': r['location_lng'] if 'location_lng' in r.keys() else None,
+            'reply_to_id': r['reply_to_id'] if 'reply_to_id' in r.keys() else None,
+            'reply_to_nickname': r['reply_to_nickname'] if 'reply_to_nickname' in r.keys() else None,
+            'reply_to_content': r['reply_to_content'] if 'reply_to_content' in r.keys() else None,
+            'time': r['create_time'][5:16] if r['create_time'] else '',
+        })
+    return jsonify({'code': 0, 'messages': msgs})
 
 
 # 未读消息数（JSON）
@@ -954,7 +1103,7 @@ def user_home(user_id):
     conn = get_conn()
     c = conn.cursor()
     user = c.execute('''SELECT id, nickname, age, gender, interests, bio, credit, avatar, level, exp, create_time,
-                               student_verified, school, show_online, last_active
+                               student_verified, school, show_online, show_school, last_active
                         FROM users WHERE id = ?''', (user_id,)).fetchone()
     if not user:
         conn.close()
@@ -1194,18 +1343,26 @@ def edit_post(post_id):
     return render_template('edit_post.html', post=post, error='', categories=CATEGORIES)
 
 
-# 删除帖子（软删除）
+# 删除帖子（软删除）：作者本人 或 管理员(id=1)
 @app.route('/post/<int:post_id>/delete', methods=['POST'])
 def delete_post(post_id):
     if 'user_id' not in session:
         return redirect(url_for('login'))
-
+    uid = session['user_id']
+    is_admin = (uid == 2)  # 只有 id=2 (同学7246) 是管理员
     conn = get_conn()
-    conn.execute('UPDATE posts SET status = 0 WHERE id = ? AND user_id = ?',
-                 (post_id, session['user_id']))
+    if is_admin:
+        conn.execute('UPDATE posts SET status = 0 WHERE id = ?', (post_id,))
+        flash('管理员：帖子已删除')
+    else:
+        conn.execute('UPDATE posts SET status = 0 WHERE id = ? AND user_id = ?',
+                     (post_id, uid))
+        flash('帖子已删除')
     conn.commit()
     conn.close()
-    flash('帖子已删除')
+    # 管理员删完回首页，作者删完回个人中心
+    if is_admin:
+        return redirect('/')
     return redirect(url_for('profile'))
 
 
@@ -1249,4 +1406,7 @@ if __name__ == '__main__':
     init_db()
     print("🚀 校园搭子APP启动成功！")
     print("📱 请在浏览器打开: http://127.0.0.1:5000")
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # threaded=True：多线程，聊天页轮询时其他按钮也不会卡住
+    # debug=False：公网暴露必须关debug（否则别人能通过调试器控制你电脑）
+    # threaded=True：多线程，聊天页轮询时其他按钮也不会卡住
+    app.run(debug=False, host='0.0.0.0', port=5000, threaded=True)

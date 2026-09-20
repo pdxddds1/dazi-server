@@ -3,17 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}校园搭子{% endblock %}</title>
+    <title>{% block title %}Find Partner{% endblock %}</title>
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
     <!-- 顶部导航栏 -->
     <nav class="navbar">
         <div class="nav-container">
-            <a href="/" class="nav-logo">🎒 校园搭子</a>
+            <a href="/" class="nav-logo">🎒 Find Partner</a>
             <div class="nav-links">
                 {% if logged_in %}
                     <a href="/publish" class="nav-btn">＋ 发帖</a>
+                    <a href="/lobby" class="nav-btn">🏛️ 大厅</a>
                     <a href="/users" class="nav-btn">🔍 搜人</a>
                     <a href="/friends" class="nav-btn">👥 好友</a>
                     <a href="/messages" class="nav-btn nav-bell">💬
@@ -45,13 +46,23 @@
     <!-- 主内容区 -->
     <main class="main-content">
         <!-- 全局返回按钮（回到上一页） -->
-        <button class="back-btn" onclick="history.back()" title="返回上一页">← 返回</button>
+        <button class="back-btn" onclick="goBack()" title="返回上一页">← 返回</button>
+<script>
+function goBack() {
+    // 如果有历史记录且不是从登录页来的，就回退；否则回首页
+    if (window.history.length > 1) {
+        window.history.back();
+    } else {
+        window.location.href = '/';
+    }
+}
+</script>
         {% block content %}{% endblock %}
     </main>
 
     <!-- 底部导航 -->
     <footer class="footer">
-        <p>校园搭子 · 第2迭代</p>
+        <p>Find Partner · 找到你的校园伙伴</p>
     </footer>
 
     {% if logged_in %}
