@@ -1,0 +1,89 @@
+<html style="margin:0;padding:0;">
+<title>Find Partner 代码地图</title>
+<div style="width:100%;box-sizing:border-box;font-family:-apple-system,'Microsoft YaHei',sans-serif;background:#f5f6fa;padding:20px;color:#333;">
+  <div style="text-align:center;margin-bottom:18px;">
+    <div style="font-size:20px;font-weight:700;color:#1a1a2e;">🎒 Find Partner 代码地图</div>
+    <div style="font-size:13px;color:#888;margin-top:4px;">看懂这张图，你就知道整个软件是怎么转起来的</div>
+  </div>
+
+  <!-- 第一部分：一次请求的旅程 -->
+  <div style="background:#fff;border-radius:14px;padding:16px;margin-bottom:16px;box-shadow:0 2px 10px rgba(0,0,0,0.06);">
+    <div style="font-weight:700;font-size:15px;color:#4e6ef2;margin-bottom:12px;">① 一次请求的旅程（比如你在首页点"发帖"）</div>
+    <div style="display:flex;align-items:stretch;gap:8px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:130px;background:#eef2ff;border-radius:10px;padding:10px;text-align:center;">
+        <div style="font-size:22px;">🌐</div>
+        <div style="font-weight:600;font-size:13px;">浏览器</div>
+        <div style="font-size:11px;color:#666;margin-top:4px;">你输入网址<br>点了按钮</div>
+      </div>
+      <div style="align-self:center;font-size:18px;color:#4e6ef2;">→</div>
+      <div style="flex:1;min-width:130px;background:#f0fdf4;border-radius:10px;padding:10px;text-align:center;">
+        <div style="font-size:22px;">🗺️</div>
+        <div style="font-weight:600;font-size:13px;">Flask 路由</div>
+        <div style="font-size:11px;color:#666;margin-top:4px;">@app.route('/publish')<br>找到对应的函数</div>
+      </div>
+      <div style="align-self:center;font-size:18px;color:#4e6ef2;">→</div>
+      <div style="flex:1;min-width:130px;background:#fff7ed;border-radius:10px;padding:10px;text-align:center;">
+        <div style="font-size:22px;">💻</div>
+        <div style="font-weight:600;font-size:13px;">函数处理</div>
+        <div style="font-size:11px;color:#666;margin-top:4px;">查数据库/存数据<br>判断登录没登录</div>
+      </div>
+      <div style="align-self:center;font-size:18px;color:#4e6ef2;">→</div>
+      <div style="flex:1;min-width:130px;background:#fdf2f8;border-radius:10px;padding:10px;text-align:center;">
+        <div style="font-size:22px;">🖼️</div>
+        <div style="font-weight:600;font-size:13px;">模板渲染</div>
+        <div style="font-size:11px;color:#666;margin-top:4px;">render_template<br>把数据填进HTML</div>
+      </div>
+      <div style="align-self:center;font-size:18px;color:#4e6ef2;">→</div>
+      <div style="flex:1;min-width:130px;background:#eef2ff;border-radius:10px;padding:10px;text-align:center;">
+        <div style="font-size:22px;">📄</div>
+        <div style="font-weight:600;font-size:13px;">网页回到浏览器</div>
+        <div style="font-size:11px;color:#666;margin-top:4px;">你看到新页面</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 第二部分：四个文件各管什么 -->
+  <div style="background:#fff;border-radius:14px;padding:16px;box-shadow:0 2px 10px rgba(0,0,0,0.06);">
+    <div style="font-weight:700;font-size:15px;color:#4e6ef2;margin-bottom:12px;">② 四个主角文件，各管一件事</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:220px;border:2px solid #4e6ef2;border-radius:12px;padding:12px;">
+        <div style="font-weight:700;font-size:14px;color:#4e6ef2;">app.py 🧠 大脑（最重要）</div>
+        <div style="font-size:12px;color:#555;margin-top:6px;line-height:1.7;">
+          · 所有"功能逻辑"都在这<br>
+          · 登录/发帖/聊天/匹配的判断<br>
+          · 读写数据库的命令<br>
+          <b>加功能主要改这里</b>
+        </div>
+      </div>
+      <div style="flex:1;min-width:220px;border:2px solid #10b981;border-radius:12px;padding:12px;">
+        <div style="font-weight:700;font-size:14px;color:#10b981;">templates/ 🎨 页面皮肤</div>
+        <div style="font-size:12px;color:#555;margin-top:6px;line-height:1.7;">
+          · 每个网页的长相（HTML）<br>
+          · 放文字、按钮、图片位置<br>
+          · 里面能写{{变量}}显示数据<br>
+          <b>改页面长相来这里</b>
+        </div>
+      </div>
+      <div style="flex:1;min-width:220px;border:2px solid #f59e0b;border-radius:12px;padding:12px;">
+        <div style="font-weight:700;font-size:14px;color:#f59e0b;">static/css/ 💄 衣服</div>
+        <div style="font-size:12px;color:#555;margin-top:6px;line-height:1.7;">
+          · 全站颜色/大小/间距<br>
+          · style.css一个文件管所有页<br>
+          · 想变漂亮改这里<br>
+          <b>改样式来这里</b>
+        </div>
+      </div>
+      <div style="flex:1;min-width:220px;border:2px solid #8b5cf6;border-radius:12px;padding:12px;">
+        <div style="font-weight:700;font-size:14px;color:#8b5cf6;">database.db 🗄️ 仓库</div>
+        <div style="font-size:12px;color:#555;margin-top:6px;line-height:1.7;">
+          · 所有数据存这里<br>
+          · 用户/帖子/聊天/匹配<br>
+          · 不是代码，是数据文件<br>
+          <b>不用手动改，代码自动管</b>
+        </div>
+      </div>
+    </div>
+    <div style="font-size:12px;color:#999;margin-top:10px;text-align:center;">示意：四个文件 = 大脑 + 皮肤 + 衣服 + 仓库，配合起来就是一个网站</div>
+  </div>
+</div>
+</html>
