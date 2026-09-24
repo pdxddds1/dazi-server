@@ -3,11 +3,14 @@
 
 {% block content %}
 <div class="lobby-page">
-    <div class="lobby-tabs">
-        <div class="lobby-tab active" id="tab-all" onclick="switchScope('all')">🌐 全网广场</div>
-        <div class="lobby-tab {{ '' if verified else 'disabled' }}" id="tab-school" onclick="switchScope('school')">
-            🏫 同校圈{% if not verified %}（需认证）{% endif %}
+    <div class="lobby-topbar">
+        <div class="lobby-tabs">
+            <div class="lobby-tab active" id="tab-all" onclick="switchScope('all')">🌐 全网广场</div>
+            <div class="lobby-tab {{ '' if verified else 'disabled' }}" id="tab-school" onclick="switchScope('school')">
+                🏫 同校圈{% if not verified %}（需认证）{% endif %}
+            </div>
         </div>
+        <div class="lobby-online" id="lobby-online">🟢 <span id="online-num">···</span> 人在线</div>
     </div>
 
     {% if my_school %}
@@ -240,5 +243,14 @@ function switchScope(scope) {
 
 loadHistory();
 setInterval(loadHistory, 2000);
+
+// 在线人数
+function loadOnline() {
+    fetch('/api/online_count')
+        .then(r => r.json())
+        .then(d => { document.getElementById('online-num').textContent = d.count; });
+}
+loadOnline();
+setInterval(loadOnline, 30000);
 </script>
 {% endblock %}

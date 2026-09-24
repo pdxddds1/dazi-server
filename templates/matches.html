@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}我的搭子 - Find Partner{% endblock %}
+
+{% block content %}
+<h2 class="section-title">🤝 我的搭子</h2>
+<p style="color:#999;font-size:13px;margin-bottom:16px;">在搭子广场互相喜欢的人，都在这里。快去打个招呼吧！</p>
+
+{% if matched %}
+<div class="tieba-user-list">
+    {% for u in matched %}
+    <div class="tieba-user-card">
+        <div class="tieba-user-main">
+            <div class="chat-avatar-wrap">
+                {% if u.avatar %}<img src="{{ u.avatar }}" class="tieba-avatar" style="border-radius:50%;">
+                {% else %}<div class="tieba-avatar">👤</div>{% endif %}
+                {% if u.show_online and is_online_fn(u.last_active) %}
+                <span class="online-dot"></span>
+                {% endif %}
+            </div>
+            <div style="flex:1;min-width:0;">
+                <div class="tieba-username">
+                    {{ u.my_note or u.nickname }}
+                    {% if u.student_verified %}<span class="verified-tag-mini">🎓</span>{% endif %}
+                    {% if u.show_school and u.school %}<span style="font-size:12px;color:#1890ff;margin-left:4px;">🏫 {{ u.school }}</span>{% endif %}
+                </div>
+                <div class="tieba-user-bio">{{ u.bio or '这个人很懒，什么都没写' }}</div>
+            </div>
+        </div>
+        <div class="tieba-user-side">
+            <a href="/chat/{{ u.id }}" class="btn-primary" style="padding:6px 18px;font-size:13px;border-radius:20px;">💬 聊天</a>
+            <a href="/user/{{ u.id }}" style="font-size:12px;color:#999;">查看主页</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-icon">💘</div>
+    <p>还没有匹配到搭子</p>
+    <p style="color:#999;font-size:14px;">去搭子广场看看，互相喜欢就能成为搭子！</p>
+    <a href="/partner" class="btn-secondary" style="margin-top:12px;">去搭子广场</a>
+</div>
+{% endif %}
+{% endblock %}

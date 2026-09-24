@@ -223,6 +223,17 @@ def init_db():
             UNIQUE(user_id, friend_id)
         )
     ''')
+    # ===== 搭子匹配滑动表（探探式：like/pass）=====
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS swipes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,      -- 谁滑的
+            target_id INTEGER NOT NULL,    -- 滑了谁
+            action TEXT DEFAULT 'like',    -- like / pass
+            create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(user_id, target_id)
+        )
+    ''')
     conn.commit()
     conn.close()
     print("✅ 数据库初始化完成")
@@ -350,7 +361,9 @@ def index():
     sql = '''
         SELECT p.id, p.title, p.category, p.create_time,
                u.nickname, u.age, u.credit, u.avatar, u.student_verified,
-               (SELECT COUNT(*) FROM likes l WHERE l.post_id = p.id) AS like_count
+               u.school, u.show_school, u.level,
+               (SELECT COUNT(*) FROM likes l WHERE l.post_id = p.id) AS like_count,
+               (SELECT COUNT(*) FROM comments cm WHERE cm.post_id = p.id) AS comment_count
         FROM posts p JOIN users u ON p.user_id = u.id
         WHERE p.status = 1
     '''
@@ -740,7 +753,7 @@ def chat_history(other_id):
     after_id = request.args.get('after_id', 0, type=int)
     conn = get_conn()
     rows = conn.execute('''SELECT m.id, m.from_user_id, m.content, m.msg_type, m.location_lat, m.location_lng,
-                                  m.create_time, u.nickname, u.avatar
+                                  m.create_time, m.is_read, u.nickname, u.avatar
                            FROM messages m JOIN users u ON u.id = m.from_user_id
                            WHERE ((m.from_user_id=? AND m.to_user_id=?) OR (m.from_user_id=? AND m.to_user_id=?))
                              AND m.id > ?
@@ -761,6 +774,7 @@ def chat_history(other_id):
             'lng': r['location_lng'],
             'time': r['create_time'][5:16] if r['create_time'] else '',
             'nickname': r['nickname'],
+            'is_read': r['is_read'],
         })
     return jsonify({'code': 0, 'messages': msgs})
 
@@ -1142,6 +1156,151 @@ def friend_request_count():
     conn = get_conn()
     n = conn.execute("SELECT COUNT(*) AS n FROM friend_requests WHERE to_id=? AND status='pending'",
                      (session['user_id'],)).fetchone()['n']
+    conn.close()
+    return jsonify({'count': n})
+
+
+# ==================== 搭子匹配（探探式卡片） ====================
+# 搭子广场页面
+@app.route('/partner')
+def partner():
+    if 'user_id' not in session:
+        return redirect('/login?next=/partner')
+    return render_template('partner.html')
+
+
+# 获取下一张推荐卡片（JSON，按兴趣重合度+同校优先）
+@app.route('/partner/next')
+def partner_next():
+    if 'user_id' not in session:
+        return jsonify({'code': 1, 'message': '请先登录'})
+    uid = session['user_id']
+    conn = get_conn()
+    me = conn.execute('SELECT interests, school FROM users WHERE id=?', (uid,)).fetchone()
+    if not me:
+        conn.close()
+        return jsonify({'code': 1, 'message': '用户不存在'})
+    my_tags = parse_interests(me['interests'] or '')
+    my_school = me['school'] or ''
+
+    # 已经滑过的人（排除）
+    swiped = [r['target_id'] for r in conn.execute(
+        'SELECT target_id FROM swipes WHERE user_id=?', (uid,)).fetchall()]
+    # 拉黑关系（排除）
+    blocked = [r['blocked_id'] for r in conn.execute(
+        'SELECT blocked_id FROM blacklist WHERE user_id=?', (uid,)).fetchall()]
+    blocked_me = [r['user_id'] for r in conn.execute(
+        'SELECT user_id FROM blacklist WHERE blocked_id=?', (uid,)).fetchall()]
+    exclude = set(swiped + blocked + blocked_me + [uid])
+
+    candidates = conn.execute('''
+        SELECT id, nickname, age, gender, interests, bio, avatar, level, exp,
+               student_verified, school, show_school, show_online, last_active
+        FROM users ORDER BY id
+    ''').fetchall()
+
+    scored = []
+    for u in candidates:
+        if u['id'] in exclude:
+            continue
+        # 兴趣重合度
+        u_tags = parse_interests(u['interests'] or '')
+        overlap = len(set(my_tags) & set(u_tags))
+        same_school = (u['school'] and u['school'] == my_school)
+        # 评分：同校+30，每重合一个兴趣+10，认证+15
+        score = overlap * 10 + (30 if same_school else 0) + (15 if u['student_verified'] else 0)
+        u_school_show = (u['school'] or '') if u['show_school'] else ''
+        scored.append({
+            'id': u['id'],
+            'nickname': u['nickname'],
+            'age': u['age'],
+            'gender': u['gender'] or '',
+            'interests': u_tags,
+            'bio': u['bio'] or '',
+            'avatar': u['avatar'] or '',
+            'level': u['level'],
+            'exp': u['exp'],
+            'verified': bool(u['student_verified']),
+            'school': u_school_show,
+            'same_school': same_school,
+            'online': bool(u['show_online']) and is_online(u['last_active']),
+            'score': score,
+        })
+    scored.sort(key=lambda x: (-x['score'], x['id']))
+    conn.close()
+    if not scored:
+        return jsonify({'code': 0, 'card': None})
+    return jsonify({'code': 0, 'card': scored[0]})
+
+
+# 滑动（like/pass）——互相喜欢=匹配成功
+@app.route('/partner/swipe', methods=['POST'])
+def partner_swipe():
+    if 'user_id' not in session:
+        return jsonify({'code': 1, 'message': '请先登录'})
+    uid = session['user_id']
+    target_id = request.form.get('target_id', type=int)
+    action = request.form.get('action', 'like')
+    if not target_id or target_id == uid:
+        return jsonify({'code': 1, 'message': '参数错误'})
+    if action not in ('like', 'pass'):
+        action = 'like'
+    conn = get_conn()
+    conn.execute('INSERT OR IGNORE INTO swipes (user_id, target_id, action) VALUES (?, ?, ?)',
+                 (uid, target_id, action))
+    # 是否互相喜欢=匹配成功
+    matched = False
+    if action == 'like':
+        reverse = conn.execute("SELECT 1 FROM swipes WHERE user_id=? AND target_id=? AND action='like'",
+                               (target_id, uid)).fetchone()
+        if reverse:
+            matched = True
+            # 自动互相关注=成为好友
+            conn.execute('INSERT OR IGNORE INTO follows (follower_id, following_id) VALUES (?, ?)',
+                         (uid, target_id))
+            conn.execute('INSERT OR IGNORE INTO follows (follower_id, following_id) VALUES (?, ?)',
+                         (target_id, uid))
+            # 互相通知
+            conn.execute('INSERT INTO notifications (user_id, from_user_id, type, content) VALUES (?, ?, ?, ?)',
+                         (target_id, uid, 'match', f'你们在搭子广场互相喜欢了！快去打个招呼吧'))
+            conn.execute('INSERT INTO notifications (user_id, from_user_id, type, content) VALUES (?, ?, ?, ?)',
+                         (uid, target_id, 'match', f'你们在搭子广场互相喜欢了！快去打个招呼吧'))
+            add_exp(conn, uid, 5)
+            add_exp(conn, target_id, 5)
+    conn.commit()
+    conn.close()
+    return jsonify({'code': 0, 'matched': matched})
+
+
+# 我的搭子（互相匹配成功的人）
+@app.route('/matches')
+def matches():
+    if 'user_id' not in session:
+        return redirect('/login?next=/matches')
+    uid = session['user_id']
+    conn = get_conn()
+    rows = conn.execute('''
+        SELECT u.id, u.nickname, u.avatar, u.bio, u.level, u.student_verified,
+               u.show_online, u.last_active, u.show_school, u.school,
+               fn.note AS my_note
+        FROM swipes s1
+        JOIN swipes s2 ON s1.user_id = s2.target_id AND s1.target_id = s2.user_id AND s2.action='like'
+        JOIN users u ON u.id = s1.target_id
+        LEFT JOIN friend_notes fn ON fn.user_id=? AND fn.friend_id = u.id
+        WHERE s1.user_id=? AND s1.action='like'
+        ORDER BY s1.create_time DESC
+    ''', (uid, uid)).fetchall()
+    conn.close()
+    return render_template('matches.html', matched=rows, is_online_fn=is_online)
+
+
+# 在线人数（大厅用）
+@app.route('/api/online_count')
+def online_count():
+    conn = get_conn()
+    n = conn.execute('''SELECT COUNT(*) AS n FROM users
+                        WHERE show_online=1 AND last_active IS NOT NULL
+                        AND last_active > datetime('now','-5 minutes')''').fetchone()['n']
     conn.close()
     return jsonify({'count': n})
 

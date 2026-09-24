@@ -1,40 +1,58 @@
 {% extends "base.html" %}
-{% block title %}{{ user.nickname }}的主页 - 校园搭子{% endblock %}
+{% block title %}{{ user.nickname }}的主页 - Find Partner{% endblock %}
 
 {% block content %}
 <div class="profile-container">
-    <div class="profile-card">
-        {% if user.avatar %}
-        <img src="{{ user.avatar }}" class="big-avatar center" alt="头像">
-        {% else %}
-        <div class="avatar">👤</div>
-        {% endif %}
-        <h2 class="profile-name">{{ user.nickname }}
-            {% if user.student_verified %}<span class="verified-tag">🎓 已学生认证</span>{% endif %}
-        </h2>
-        {% if user.student_verified and user.school %}
-            {% if is_self or user.show_school %}
-            <div class="profile-school">🏫 {{ user.school }}</div>
-            {% endif %}
-        {% endif %}
-
-        <div class="profile-detail">
-            {% if online_now %}<span class="online-text">🟢 在线</span>{% else %}<span class="offline-text">⚪ 离线</span>{% endif %}
-            {% if user.age %}<span>{{ user.age }}岁</span>{% endif %}
-            {% if user.gender %}<span>{{ user.gender }}</span>{% endif %}
-            <span><span class="level-badge">Lv.{{ user.level }}</span></span>
-            <span>加入于 {{ user.create_time[:10] }}</span>
+    <!-- 封面 + 资料卡 -->
+    <div class="profile-cover-card">
+        <div class="profile-cover"></div>
+        <div class="profile-main">
+            <div class="profile-avatar-wrap">
+                {% if user.avatar %}<img src="{{ user.avatar }}" class="profile-avatar" alt="头像">
+                {% else %}<div class="profile-avatar">👤</div>{% endif %}
+                {% if online_now %}<span class="profile-online-dot" title="在线"></span>{% endif %}
+            </div>
+            <div class="profile-head-info">
+                <h2 class="profile-name">{{ user.nickname }}
+                    {% if user.student_verified %}<span class="verified-tag">🎓 已学生认证</span>{% endif %}
+                </h2>
+                {% if user.student_verified and user.school %}
+                    {% if is_self or user.show_school %}
+                    <div class="profile-school">🏫 {{ user.school }}</div>
+                    {% endif %}
+                {% endif %}
+                <div class="profile-detail">
+                    {% if online_now %}<span class="online-text">🟢 在线</span>{% else %}<span class="offline-text">⚪ 离线</span>{% endif %}
+                    {% if user.age %}<span>{{ user.age }}岁</span>{% endif %}
+                    {% if user.gender %}<span>{{ user.gender }}</span>{% endif %}
+                    <span>加入于 {{ user.create_time[:10] }}</span>
+                </div>
+            </div>
         </div>
 
-        <!-- 关注 / 粉丝 数字（贴吧风格） -->
-        <div class="tieba-stats">
-            <a href="/friends?tab=following" class="tieba-stat">
-                <span class="tieba-stat-num">{{ following_count }}</span>
-                <span class="tieba-stat-label">关注</span>
+        <!-- 等级 + 经验条 -->
+        <div class="profile-level-row">
+            <span class="level-badge">Lv.{{ user.level }}</span>
+            {% if user.exp %}
+            <div class="mini-exp-bar">
+                <div class="mini-exp-fill" style="width:{{ (user.exp % (user.level*100)) * 100 // (user.level*100) }}%"></div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- 统计：帖子 / 关注 / 粉丝 -->
+        <div class="profile-stats">
+            <div class="profile-stat">
+                <span class="profile-stat-num">{{ posts|length }}</span>
+                <span class="profile-stat-label">帖子</span>
+            </div>
+            <a href="/friends?tab=following" class="profile-stat">
+                <span class="profile-stat-num">{{ following_count }}</span>
+                <span class="profile-stat-label">关注</span>
             </a>
-            <a href="/friends?tab=fans" class="tieba-stat">
-                <span class="tieba-stat-num">{{ fan_count }}</span>
-                <span class="tieba-stat-label">粉丝</span>
+            <a href="/friends?tab=fans" class="profile-stat">
+                <span class="profile-stat-num">{{ fan_count }}</span>
+                <span class="profile-stat-label">粉丝</span>
             </a>
         </div>
 
@@ -51,31 +69,31 @@
         {% endif %}
 
         {% if logged_in and not is_self %}
-            <!-- 贴吧式关注按钮 -->
-            <button class="tieba-follow-btn big {{ 'followed' if is_following else '' }}"
-                    id="user-follow-btn" onclick="toggleFollow()">
-                {{ '已关注' if is_following else '+ 关注TA' }}
-            </button>
-
-            <!-- 加好友按钮 -->
-            {% if is_mutual %}
-            <a href="/chat/{{ user.id }}" class="btn-primary btn-sm" style="margin-top:8px;">💬 发消息</a>
-            {% else %}
-            <button class="btn-primary btn-sm" style="margin-top:8px;" onclick="sendFriendReq()">➕ 加好友</button>
-            {% endif %}
-
-            {% if is_blocked %}
-            <form method="POST" action="/user/{{ user.id }}/unblock">
-                <button type="submit" class="btn-secondary btn-logout">解除拉黑</button>
-            </form>
-            {% else %}
-            <form method="POST" action="/user/{{ user.id }}/block"
-                  onsubmit="return confirm('确定拉黑该用户？首页将不再显示TA的帖子，TA也不能评论你的帖子');">
-                <button type="submit" class="btn-secondary btn-logout">拉黑</button>
-            </form>
-            {% endif %}
+            <div class="profile-actions" style="flex-wrap:wrap;">
+                <!-- 贴吧式关注按钮 -->
+                <button class="tieba-follow-btn {{ 'followed' if is_following else '' }}"
+                        id="user-follow-btn" onclick="toggleFollow()">
+                    {{ '已关注' if is_following else '+ 关注TA' }}
+                </button>
+                <!-- 加好友 / 发消息 -->
+                {% if is_mutual %}
+                <a href="/chat/{{ user.id }}" class="btn-primary" style="width:auto;padding:8px 22px;font-size:14px;">💬 发消息</a>
+                {% else %}
+                <button class="btn-primary" style="width:auto;padding:8px 22px;font-size:14px;" onclick="sendFriendReq()">➕ 加好友</button>
+                {% endif %}
+                <!-- 拉黑 -->
+                {% if is_blocked %}
+                <form method="POST" action="/user/{{ user.id }}/unblock" style="display:inline;">
+                    <button type="submit" class="btn-secondary btn-logout" style="font-size:13px;">解除拉黑</button>
+                </form>
+                {% else %}
+                <form method="POST" action="/user/{{ user.id }}/block" style="display:inline;"
+                      onsubmit="return confirm('确定拉黑该用户？首页将不再显示TA的帖子，TA也不能评论你的帖子');">
+                    <button type="submit" class="btn-secondary btn-logout" style="font-size:13px;">拉黑</button>
+                </form>
+                {% endif %}
+            </div>
         {% elif not logged_in %}
-            <!-- 未登录：引导登录关注 -->
             <a href="/login?next=/user/{{ user.id }}" class="tieba-follow-btn big">🔐 登录后关注</a>
         {% endif %}
     </div>
@@ -108,7 +126,7 @@ function toggleFollow() {
             const btn = document.getElementById('user-follow-btn');
             btn.classList.toggle('followed', res.following);
             btn.textContent = res.following ? '已关注' : '+ 关注TA';
-            const fanNum = document.querySelector('.tieba-stat:nth-child(2) .tieba-stat-num');
+            const fanNum = document.querySelector('.profile-stat:nth-child(3) .profile-stat-num');
             if (fanNum) fanNum.textContent = res.count;
         });
 }

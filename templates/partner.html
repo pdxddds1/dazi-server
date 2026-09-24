@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% block title %}搭子广场 - Find Partner{% endblock %}
+
+{% block content %}
+<div class="partner-page">
+    <div class="partner-head">
+        <h2 class="section-title">💘 搭子广场</h2>
+        <p class="partner-sub">左滑跳过 · 右滑喜欢 · 互相喜欢即可成为搭子</p>
+    </div>
+
+    <div class="partner-stage" id="partner-stage">
+        <!-- 卡片由JS填充 -->
+        <div class="partner-loading">正在寻找你的搭子...</div>
+    </div>
+
+    <div class="partner-actions">
+        <button class="partner-btn pass" id="btn-pass" title="跳过">✕</button>
+        <button class="partner-btn like" id="btn-like" title="喜欢">❤</button>
+    </div>
+
+    <div class="partner-tip" id="partner-tip"></div>
+</div>
+
+<style>
+.partner-page { max-width: 420px; margin: 0 auto; text-align: center; }
+.partner-head { margin-bottom: 12px; }
+.partner-head .section-title { margin: 0 0 4px; }
+.partner-sub { color: #999; font-size: 13px; margin-bottom: 16px; }
+
+.partner-stage {
+    position: relative;
+    height: 420px;
+    margin-bottom: 20px;
+}
+.partner-card {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    background: white;
+    border-radius: 22px;
+    box-shadow: 0 8px 30px rgba(31,35,41,0.12);
+    overflow: hidden;
+    padding: 28px 20px 20px;
+    transition: transform .3s ease, opacity .3s ease;
+    min-height: 420px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: 1px solid #eef0f5;
+}
+.partner-card.out-left { transform: translateX(-120%) rotate(-12deg); opacity: 0; }
+.partner-card.out-right { transform: translateX(120%) rotate(12deg); opacity: 0; }
+
+.partner-avatar {
+    width: 110px; height: 110px; border-radius: 50%;
+    background: linear-gradient(135deg, #eef2ff, #fce7f3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 52px; overflow: hidden;
+    margin-bottom: 12px;
+    border: 4px solid white;
+    box-shadow: 0 4px 16px rgba(78,110,242,0.25);
+}
+.partner-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.partner-name { font-size: 22px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+.partner-school {
+    display: inline-block; margin-top: 6px; padding: 3px 12px;
+    background: linear-gradient(135deg,#e0e7ff,#fce7f3); color: #4338ca;
+    border-radius: 14px; font-size: 13px; font-weight: 500;
+}
+.partner-online { color: #52c41a; font-size: 12px; margin-top: 4px; }
+.partner-tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin: 12px 0; }
+.partner-tag {
+    background: #eef2ff; color: #4e6ef2; padding: 4px 12px;
+    border-radius: 14px; font-size: 12.5px;
+}
+.partner-bio { color: #666; font-size: 14px; margin: 4px 0 8px; line-height: 1.6; max-height: 60px; overflow: hidden; }
+.partner-level { font-size: 13px; color: #999; margin-top: auto; padding-top: 10px; }
+.partner-badge {
+    position: absolute; top: 16px; font-size: 14px; font-weight: 800;
+    padding: 6px 18px; border-radius: 20px; display: none;
+}
+.partner-badge.like-badge { color: #ff4d6d; border: 3px solid #ff4d6d; transform: rotate(-15deg); }
+.partner-badge.pass-badge { color: #999; border: 3px solid #999; transform: rotate(15deg); }
+
+.partner-actions { display: flex; justify-content: center; gap: 40px; margin-bottom: 14px; }
+.partner-btn {
+    width: 68px; height: 68px; border-radius: 50%;
+    border: none; font-size: 28px; cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    transition: transform .15s;
+}
+.partner-btn:active { transform: scale(0.92); }
+.partner-btn.pass { background: #f0f0f0; color: #888; }
+.partner-btn.like { background: linear-gradient(135deg, #ff4d6d, #ff6b81); color: white; }
+
+.partner-loading { color: #999; font-size: 15px; padding-top: 180px; }
+.partner-tip { color: #999; font-size: 13px; min-height: 20px; }
+.partner-empty {
+    background: white; border-radius: 22px; padding: 60px 24px;
+    box-shadow: var(--shadow); color: #999; font-size: 15px;
+}
+.partner-empty .big { font-size: 48px; margin-bottom: 12px; }
+.partner-match {
+    position: absolute; top: 120px; left: 20%; right: 20%;
+    background: linear-gradient(135deg, #ff4d6d, #ff6b81);
+    color: white; padding: 18px; border-radius: 20px;
+    box-shadow: 0 12px 32px rgba(255,77,109,0.4);
+    font-size: 16px; font-weight: 700; z-index: 20;
+    animation: popIn .4s ease;
+}
+.partner-match small { display: block; font-weight: 400; font-size: 13px; margin-top: 4px; }
+@keyframes popIn { from { transform: scale(.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+</style>
+
+<script>
+let currentCard = null;
+const stage = document.getElementById('partner-stage');
+
+function loadCard() {
+    fetch('/partner/next')
+        .then(r => r.json())
+        .then(data => {
+            if (data.code !== 0) { showEmpty(data.message || '出错啦'); return; }
+            if (!data.card) { showEmpty('搭子都被你刷完啦，过会儿再来看看'); return; }
+            renderCard(data.card);
+        });
+}
+
+function renderCard(c) {
+    const tags = (c.interests || []).map(t => `<span class="partner-tag">#${t}</span>`).join('');
+    const av = c.avatar
+        ? `<img src="${c.avatar}">`
+        : '<span>👤</span>';
+    const school = c.school ? `<div class="partner-school">🏫 ${c.school}</div>` : '';
+    const online = c.online ? `<div class="partner-online">🟢 在线</div>` : '';
+    const verified = c.verified ? '<span class="verified-tag-mini">🎓</span>' : '';
+    const card = document.createElement('div');
+    card.className = 'partner-card';
+    card.dataset.id = c.id;
+    card.innerHTML = `
+        <div class="partner-badge like-badge">❤ 喜欢</div>
+        <div class="partner-badge pass-badge">✕ 跳过</div>
+        <div class="partner-avatar">${av}</div>
+        <div class="partner-name">${c.nickname} ${verified}</div>
+        ${school}
+        ${online}
+        <div class="partner-tags">${tags || '<span class="partner-tag">#还没填兴趣</span>'}</div>
+        <div class="partner-bio">${c.bio ? '“' + c.bio + '”' : ''}</div>
+        <div class="partner-level">🎖️ Lv.${c.level}${c.same_school ? ' · 和你同校！' : ''}</div>
+    `;
+    stage.innerHTML = '';
+    stage.appendChild(card);
+    currentCard = card;
+}
+
+function showEmpty(msg) {
+    stage.innerHTML = `<div class="partner-empty"><div class="big">🎉</div>${msg}</div>`;
+    currentCard = null;
+}
+
+function swipe(action) {
+    if (!currentCard) return;
+    const card = currentCard;
+    const id = card.dataset.id;
+    // 动画
+    card.classList.add(action === 'like' ? 'out-right' : 'out-left');
+    if (action === 'like') card.querySelector('.like-badge').style.display = 'inline-block';
+    else card.querySelector('.pass-badge').style.display = 'inline-block';
+
+    const fd = new FormData();
+    fd.append('target_id', id);
+    fd.append('action', action);
+    fetch('/partner/swipe', { method: 'POST', body: fd })
+        .then(r => r.json())
+        .then(data => {
+            if (data.code !== 0) { alert(data.message); }
+            else if (data.matched) {
+                // 匹配成功弹窗
+                const m = document.createElement('div');
+                m.className = 'partner-match';
+                m.innerHTML = `💘 匹配成功！<small>TA也喜欢了你，快去打个招呼吧 → <a href="/chat/${id}" style="color:#fff;text-decoration:underline;">去聊天</a></small>`;
+                stage.appendChild(m);
+                setTimeout(() => m.remove(), 3500);
+            }
+            setTimeout(loadCard, 350);
+        });
+}
+
+document.getElementById('btn-like').onclick = () => swipe('like');
+document.getElementById('btn-pass').onclick = () => swipe('pass');
+// 键盘支持：←跳过 →喜欢
+document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowLeft') swipe('pass');
+    if (e.key === 'ArrowRight') swipe('like');
+});
+
+loadCard();
+</script>
+{% endblock %}
