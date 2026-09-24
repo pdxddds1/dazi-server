@@ -11,7 +11,7 @@
     {% if logged_in %}
     <div class="hero-actions">
         <a href="/publish" class="hero-btn">＋ 发帖</a>
-        <a href="/partner" class="hero-btn ghost">💘 搭子广场</a>
+        <a href="/partner" class="hero-btn ghost">🎯 搭子广场</a>
         <a href="/lobby" class="hero-btn ghost">🏛️ 大厅</a>
     </div>
     {% else %}
@@ -24,7 +24,7 @@
 <!-- 快捷入口 -->
 <div class="quick-grid">
     <a href="/partner" class="quick-card">
-        <div class="quick-icon">💘</div>
+        <div class="quick-icon">🎯</div>
         <div class="quick-name">搭子广场</div>
     </a>
     <a href="/lobby" class="quick-card">
@@ -90,7 +90,7 @@
             </div>
             <h3 class="post-title">{{ post.title }}</h3>
             <div class="feed-actions">
-                <span class="feed-action">❤ <span class="like-num">{{ post.like_count }}</span></span>
+                <span class="feed-action">👍 <span class="like-num">{{ post.like_count }}</span></span>
                 <span class="feed-action">💬 {{ post.comment_count }}</span>
                 <span class="feed-action">👀 去看看 →</span>
             </div>

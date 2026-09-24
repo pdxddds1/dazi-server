@@ -4,8 +4,8 @@
 {% block content %}
 <div class="partner-page">
     <div class="partner-head">
-        <h2 class="section-title">💘 搭子广场</h2>
-        <p class="partner-sub">左滑跳过 · 右滑喜欢 · 互相喜欢即可成为搭子</p>
+        <h2 class="section-title">🎯 搭子广场</h2>
+        <p class="partner-sub">左滑跳过 · 右滑感兴趣 · 双方感兴趣即可成为搭子</p>
     </div>
 
     <div class="partner-stage" id="partner-stage">
@@ -15,7 +15,7 @@
 
     <div class="partner-actions">
         <button class="partner-btn pass" id="btn-pass" title="跳过">✕</button>
-        <button class="partner-btn like" id="btn-like" title="喜欢">❤</button>
+        <button class="partner-btn like" id="btn-like" title="感兴趣">👍</button>
     </div>
 
     <div class="partner-tip" id="partner-tip"></div>
@@ -79,7 +79,7 @@
     position: absolute; top: 16px; font-size: 14px; font-weight: 800;
     padding: 6px 18px; border-radius: 20px; display: none;
 }
-.partner-badge.like-badge { color: #ff4d6d; border: 3px solid #ff4d6d; transform: rotate(-15deg); }
+.partner-badge.like-badge { color: #4e6ef2; border: 3px solid #4e6ef2; transform: rotate(-15deg); }
 .partner-badge.pass-badge { color: #999; border: 3px solid #999; transform: rotate(15deg); }
 
 .partner-actions { display: flex; justify-content: center; gap: 40px; margin-bottom: 14px; }
@@ -91,7 +91,7 @@
 }
 .partner-btn:active { transform: scale(0.92); }
 .partner-btn.pass { background: #f0f0f0; color: #888; }
-.partner-btn.like { background: linear-gradient(135deg, #ff4d6d, #ff6b81); color: white; }
+.partner-btn.like { background: linear-gradient(135deg, #4e6ef2, #6c8cff); color: white; }
 
 .partner-loading { color: #999; font-size: 15px; padding-top: 180px; }
 .partner-tip { color: #999; font-size: 13px; min-height: 20px; }
@@ -102,9 +102,9 @@
 .partner-empty .big { font-size: 48px; margin-bottom: 12px; }
 .partner-match {
     position: absolute; top: 120px; left: 20%; right: 20%;
-    background: linear-gradient(135deg, #ff4d6d, #ff6b81);
+    background: linear-gradient(135deg, #4e6ef2, #6c8cff);
     color: white; padding: 18px; border-radius: 20px;
-    box-shadow: 0 12px 32px rgba(255,77,109,0.4);
+    box-shadow: 0 12px 32px rgba(78,110,242,0.4);
     font-size: 16px; font-weight: 700; z-index: 20;
     animation: popIn .4s ease;
 }
@@ -138,7 +138,7 @@ function renderCard(c) {
     card.className = 'partner-card';
     card.dataset.id = c.id;
     card.innerHTML = `
-        <div class="partner-badge like-badge">❤ 喜欢</div>
+        <div class="partner-badge like-badge">👍 感兴趣</div>
         <div class="partner-badge pass-badge">✕ 跳过</div>
         <div class="partner-avatar">${av}</div>
         <div class="partner-name">${c.nickname} ${verified}</div>
@@ -178,7 +178,7 @@ function swipe(action) {
                 // 匹配成功弹窗
                 const m = document.createElement('div');
                 m.className = 'partner-match';
-                m.innerHTML = `💘 匹配成功！<small>TA也喜欢了你，快去打个招呼吧 → <a href="/chat/${id}" style="color:#fff;text-decoration:underline;">去聊天</a></small>`;
+                m.innerHTML = `🤝 匹配成功！<small>TA也对你感兴趣，快去认识一下吧 → <a href="/chat/${id}" style="color:#fff;text-decoration:underline;">去聊天</a></small>`;
                 stage.appendChild(m);
                 setTimeout(() => m.remove(), 3500);
             }
