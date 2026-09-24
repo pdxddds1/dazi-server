@@ -67,17 +67,36 @@
             <a href="/verify" class="btn-secondary">🎓 认证信息</a>
             {% endif %}
             <a href="/messages" class="btn-secondary">💬 我的消息</a>
-            <button class="btn-secondary" id="online-toggle">
-                🟢 在线状态：{{ '开启' if user_info.show_online else '关闭' }}
-            </button>
-            <button class="btn-secondary" id="school-toggle">
-                🏫 学校显示：{{ '开启' if user_info.show_school else '关闭' }}
-            </button>
             <a href="/profile/edit" class="btn-secondary">✏️ 编辑资料</a>
             <a href="/friends" class="btn-secondary">👥 我的好友</a>
             <a href="/blocklist" class="btn-secondary">🚫 黑名单</a>
             <a href="/change_password" class="btn-secondary">🔒 修改密码</a>
             <a href="/logout" class="btn-secondary btn-logout">退出登录</a>
+        </div>
+
+        <!-- 隐私设置：学校 / 在线可一键隐藏（照顾同学自尊心） -->
+        <div class="privacy-card">
+            <div class="privacy-title">🛡️ 隐私设置</div>
+            <div class="privacy-item">
+                <div class="privacy-text">
+                    <div class="privacy-name">🏫 展示我的学校</div>
+                    <div class="privacy-desc">关闭后，别人看不到你的学校</div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="school-toggle" {{ 'checked' if user_info.show_school else '' }}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="privacy-item">
+                <div class="privacy-text">
+                    <div class="privacy-name">🟢 显示在线状态</div>
+                    <div class="privacy-desc">关闭后，别人看不到你是否在线</div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="online-toggle" {{ 'checked' if user_info.show_online else '' }}>
+                    <span class="slider"></span>
+                </label>
+            </div>
         </div>
     </div>
 
@@ -143,25 +162,35 @@
 </div>
 
 <script>
-// 在线状态开关
-document.getElementById('online-toggle').onclick = function() {
+// 在线状态开关（滑块）
+const onlineToggle = document.getElementById('online-toggle');
+onlineToggle.onchange = function() {
     fetch('/toggle_online', { method: 'POST' })
         .then(r => r.json())
         .then(data => {
             if (data.code === 0) {
-                this.textContent = '🟢 在线状态：' + (data.show_online ? '开启' : '关闭');
+                this.checked = !!data.show_online;
+            } else {
+                this.checked = !this.checked;
+                alert(data.message || '切换失败');
             }
-        });
+        })
+        .catch(() => { this.checked = !this.checked; alert('网络错误，请重试'); });
 };
-// 学校显示开关
-document.getElementById('school-toggle').onclick = function() {
+// 学校显示开关（滑块）
+const schoolToggle = document.getElementById('school-toggle');
+schoolToggle.onchange = function() {
     fetch('/toggle_school', { method: 'POST' })
         .then(r => r.json())
         .then(data => {
             if (data.code === 0) {
-                this.textContent = '🏫 学校显示：' + (data.show_school ? '开启' : '关闭');
+                this.checked = !!data.show_school;
+            } else {
+                this.checked = !this.checked;
+                alert(data.message || '切换失败');
             }
-        });
+        })
+        .catch(() => { this.checked = !this.checked; alert('网络错误，请重试'); });
 };
 </script>
 {% endblock %}
